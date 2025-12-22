@@ -44,4 +44,49 @@ function calculateColumn() {
     document.getElementById('columnOutput').innerHTML = `
         Axial Load Capacity = ${axialLoad} kN<br>
         Concrete Grade: ${concreteGrade}<br>
-       
+        Steel Grade: ${steelGrade}<br>
+        Bars: ${bars} x ${barSize}mm
+    `;
+}
+
+// Slab Design Calculation
+function calculateSlab() {
+    const length = parseFloat(document.getElementById('slabLength').value); // Slab Length (L)
+    const width = parseFloat(document.getElementById('slabWidth').value); // Slab Width (b)
+    const thickness = parseFloat(document.getElementById('slabThickness').value); // Slab Thickness (h)
+    const concreteGrade = document.getElementById('slabConcreteGrade').value; // Concrete Grade
+    const steelGrade = document.getElementById('slabSteelGrade').value; // Steel Grade
+    const mainBars = parseInt(document.getElementById('slabMainBars').value); // Number of main bars
+    const barSize = parseInt(document.getElementById('slabBarSize').value); // Bar Size
+
+    // Formula for slab bending moment (simplified for one-way slab)
+    const bendingMoment = (length * width * thickness * 0.12);  // Simplified formula for bending moment
+    
+    // Output results
+    document.getElementById('slabOutput').innerHTML = `
+        Bending Moment = ${bendingMoment} kNm<br>
+        Concrete Grade: ${concreteGrade}<br>
+        Steel Grade: ${steelGrade}<br>
+        Main Bars: ${mainBars} x ${barSize}mm
+    `;
+}
+
+// Foundation Design Calculation
+function calculateFoundation() {
+    const width = parseFloat(document.getElementById('foundationWidth').value); // Foundation Width (b)
+    const length = parseFloat(document.getElementById('foundationLength').value); // Foundation Length (L)
+    const depth = parseFloat(document.getElementById('foundationDepth').value); // Foundation Depth (d)
+    const soilBearingCapacity = parseFloat(document.getElementById('soilBearingCapacity').value); // Soil Bearing Capacity
+    const columnLoad = parseFloat(document.getElementById('columnLoad').value); // Column Load
+
+    // Formula for foundation bearing capacity
+    const foundationCapacity = width * length * depth * soilBearingCapacity;
+    const factorSafety = 3;  // Typical factor of safety for foundation design
+
+    // Output results
+    document.getElementById('foundationOutput').innerHTML = `
+        Foundation Capacity = ${foundationCapacity} kN<br>
+        Column Load = ${columnLoad} kN<br>
+        Factor of Safety = ${factorSafety}
+    `;
+}
