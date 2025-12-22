@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Motion | Next-Gen UI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --text-muted: #64748b;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--light); 
+            color: var(--dark); 
+            overflow-x: hidden; 
+            line-height: 1.6;
+        }
+
+        /* --- Custom Magnetic Cursor --- */
+        .cursor-dot, .cursor-outline {
+            position: fixed; top: 0; left: 0; transform: translate(-50%, -50%);
+            border-radius: 50%; z-index: 9999; pointer-events: none;
+            transition: width 0.3s, height 0.3s, background-color 0.3s, opacity 0.3s;
+        }
+        .cursor-dot { width: 8px; height: 8px; background: var(--primary); }
+        .cursor-outline { width: 40px; height: 40px; border: 1.5px solid var(--primary); }
+        body.cursor-active .cursor-outline { 
+            width: 60px; height: 60px; background: rgba(99, 102, 241, 0.1); border-color: transparent; 
+        }
+        @media (min-width: 769px) { body, a, button { cursor: none; } }
+
+        /* --- Navigation --- */
+        .navbar {
+            position: fixed; top: 0; width: 100%; z-index: 100; padding: 30px 0;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .navbar.scrolled {
+            padding: 15px 0; background: var(--glass-bg); backdrop-filter: blur(15px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        .nav-container {
+            max-width: 1200px; margin: 0 auto; padding: 0 24px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { font-size: 1.5rem; font-weight: 800; text-decoration: none; color: var(--dark); }
+        .logo span { color: var(--primary); }
+        .nav-cta {
+            background: var(--dark); color: white; padding: 10px 24px;
+            border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.9rem;
+            transition: 0.3s;
+        }
+        .nav-cta:hover { background: var(--primary); transform: translateY(-2px); }
+
+        /* --- Hero Section --- */
+        .hero { 
+            height: 100vh; display: flex; align-items: center; position: relative; 
+        }
+        .hero-container {
+            max-width: 1200px; margin: 0 auto; width: 100%; padding: 0 24px;
+            display: grid; grid-template-columns: 1.1fr 0.9fr; align-items: center; gap: 60px;
+        }
+
+        /* --- Animated Background --- */
+        .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.15; z-index: -1; }
+        #blob1 { width: 500px; height: 500px; background: var(--primary); top: -100px; right: -50px; }
+        #blob2 { width: 350px; height: 350px; background: var(--secondary); bottom: 10%; left: 5%; }
+
+        /* --- Content Styling --- */
+        h1 { font-size: clamp(2.8rem, 5vw, 4.5rem); line-height: 1.1; margin-bottom: 24px; font-weight: 800; letter-spacing: -2px; }
+        h1 span { background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        p { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 40px; max-width: 520px; }
+        
+        .cta-btn {
+            padding: 18px 36px; border-radius: 14px; text-decoration: none;
+            font-weight: 700; background: var(--primary); color: white;
+            box-shadow: 0 15px 30px rgba(99, 102, 241, 0.2); transition: 0.3s;
+            display: inline-block;
+        }
+        .cta-btn:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(99, 102, 241, 0.3); }
+
+        /* --- Hero Visual --- */
+        .hero-visual { position: relative; perspective: 1000px; }
+        .glass-card {
+            width: 100%; aspect-ratio: 4/3; border-radius: 40px; overflow: hidden;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.4);
+            animation: float 6s ease-in-out infinite; transform-style: preserve-3d;
+        }
+        .card-video { width: 100%; height: 100%; object-fit: cover; }
+        
+        .badge {
+            position: absolute; background: white; padding: 14px 22px; border-radius: 20px;
+            font-weight: 800; font-size: 0.85rem; box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            z-index: 10; display: flex; align-items: center; gap: 10px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .badge-1 { top: -20px; right: 20px; }
+        .badge-2 { bottom: 30px; left: -30px; }
+
+        /* --- Animations --- */
+        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-20px) rotate(1deg); } }
+        
+        .reveal { opacity: 0; transform: translateY(40px); transition: 1.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 968px) {
+            .hero-container { grid-template-columns: 1fr; text-align: center; padding-top: 120px; }
+            .hero-content { display: flex; flex-direction: column; align-items: center; }
+            .badge { display: none; }
+            .hero { height: auto; padding-bottom: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="logo">GITHUB<span>.</span>PAGES</a>
+            <a href="#" class="nav-cta">View Source</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="blob" id="blob1"></div>
+        <div class="blob" id="blob2"></div>
+
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="reveal">Build with <span>Dynamic</span> Motion</h1>
+                <p class="reveal">A high-performance hero template optimized for GitHub Pages. Fast, fluid, and fully responsive.</p>
+                <div class="reveal">
+                    <a href="#" class="cta-btn">Clone Repository</a>
+                </div>
+            </div>
+
+            <div class="hero-visual reveal">
+                <div class="badge badge-1">🚀 100 Lighthouse</div>
+                <div class="badge badge-2">✨ Smooth 60fps</div>
+                <div class="glass-card">
+                    <video autoplay muted loop playsinline class="card-video">
+                        <source src="https://assets.mixkit.co/videos/preview/mixkit-abstract-gradient-background-20234-large.mp4" type="video/mp4">
+                    </video>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Entrance Animations
+            const reveals = document.querySelectorAll('.reveal');
+            reveals.forEach((el, i) => {
+                setTimeout(() => el.classList.add('active'), 150 * i);
+            });
+
+            // 2. Navbar Scroll Logic
+            window.addEventListener('scroll', () => {
+                const nav = document.querySelector('.navbar');
+                nav.classList.toggle('scrolled', window.scrollY > 50);
+            });
+
+            // 3. Magnetic Cursor & Parallax Logic
+            const dot = document.querySelector('.cursor-dot');
+            const outline = document.querySelector('.cursor-outline');
+            const b1 = document.getElementById('blob1');
+            const b2 = document.getElementById('blob2');
+            
+            let mouseX = 0, mouseY = 0; // Mouse Target
+            let dotX = 0, dotY = 0;     // Dot Current
+            let outX = 0, outY = 0;     // Outline Current
+
+            window.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                
+                // Direct update for dot
+                dot.style.left = mouseX + 'px';
+                dot.style.top = mouseY + 'px';
+
+                // Parallax shift for blobs
+                const moveX = (mouseX - window.innerWidth/2) * 0.02;
+                const moveY = (mouseY - window.innerHeight/2) * 0.02;
+                b1.style.transform = `translate(${moveX}px, ${moveY}px)`;
+                b2.style.transform = `translate(${-moveX}px, ${-moveY}px)`;
+            });
+
+            function updateCursor() {
+                // Smoothing the outline (Lerp)
+                outX += (mouseX - outX) * 0.15;
+                outY += (mouseY - outY) * 0.15;
+                outline.style.left = outX + 'px';
+                outline.style.top = outY + 'px';
+                requestAnimationFrame(updateCursor);
+            }
+            updateCursor();
+
+            // 4. Hover States
+            const interactives = document.querySelectorAll('a, button, .cta-btn, .glass-card');
+            interactives.forEach(el => {
+                el.addEventListener('mouseenter', () => document.body.classList.add('cursor-active'));
+                el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-active'));
+            });
+        });
+    </script>
+</body>
+</html>
