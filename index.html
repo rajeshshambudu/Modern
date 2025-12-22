@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Motion | Next-Gen UI</title>
+    <title>Modern Motion | Portfolio & Game</title>
+    
+    <meta name="description" content="A high-performance interactive portfolio featuring modern motion and game design.">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --primary: #6366f1;
@@ -12,109 +15,76 @@
             --dark: #0f172a;
             --light: #f8fafc;
             --text-muted: #64748b;
-            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass: rgba(255, 255, 255, 0.7);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        
-        body { 
-            background: var(--light); 
-            color: var(--dark); 
-            overflow-x: hidden; 
-            line-height: 1.6;
-        }
+        body { background: var(--light); color: var(--dark); overflow-x: hidden; scroll-behavior: smooth; }
 
-        /* --- Custom Magnetic Cursor --- */
+        /* Custom Cursor */
         .cursor-dot, .cursor-outline {
             position: fixed; top: 0; left: 0; transform: translate(-50%, -50%);
             border-radius: 50%; z-index: 9999; pointer-events: none;
-            transition: width 0.3s, height 0.3s, background-color 0.3s, opacity 0.3s;
+            transition: width 0.3s, height 0.3s, background-color 0.3s;
         }
         .cursor-dot { width: 8px; height: 8px; background: var(--primary); }
         .cursor-outline { width: 40px; height: 40px; border: 1.5px solid var(--primary); }
-        body.cursor-active .cursor-outline { 
-            width: 60px; height: 60px; background: rgba(99, 102, 241, 0.1); border-color: transparent; 
-        }
+        body.cursor-active .cursor-outline { width: 65px; height: 65px; background: rgba(99, 102, 241, 0.1); border-color: transparent; }
         @media (min-width: 769px) { body, a, button { cursor: none; } }
 
-        /* --- Navigation --- */
+        /* Navbar */
         .navbar {
-            position: fixed; top: 0; width: 100%; z-index: 100; padding: 30px 0;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: fixed; top: 0; width: 100%; z-index: 1000; padding: 30px 0;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .navbar.scrolled {
-            padding: 15px 0; background: var(--glass-bg); backdrop-filter: blur(15px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
-        .nav-container {
-            max-width: 1200px; margin: 0 auto; padding: 0 24px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .logo { font-size: 1.5rem; font-weight: 800; text-decoration: none; color: var(--dark); }
+        .navbar.scrolled { padding: 15px 0; background: var(--glass); backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .nav-container { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: 800; text-decoration: none; color: var(--dark); letter-spacing: -1px; }
         .logo span { color: var(--primary); }
-        .nav-cta {
-            background: var(--dark); color: white; padding: 10px 24px;
-            border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.9rem;
-            transition: 0.3s;
-        }
-        .nav-cta:hover { background: var(--primary); transform: translateY(-2px); }
 
-        /* --- Hero Section --- */
-        .hero { 
-            height: 100vh; display: flex; align-items: center; position: relative; 
-        }
-        .hero-container {
-            max-width: 1200px; margin: 0 auto; width: 100%; padding: 0 24px;
-            display: grid; grid-template-columns: 1.1fr 0.9fr; align-items: center; gap: 60px;
-        }
+        /* Hero & Layout */
+        .section { padding: 100px 24px; max-width: 1200px; margin: 0 auto; position: relative; }
+        .hero { height: 100vh; display: flex; align-items: center; padding-top: 80px; }
+        .hero-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 60px; align-items: center; width: 100%; }
 
-        /* --- Animated Background --- */
+        /* Motion Components */
         .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.15; z-index: -1; }
         #blob1 { width: 500px; height: 500px; background: var(--primary); top: -100px; right: -50px; }
         #blob2 { width: 350px; height: 350px; background: var(--secondary); bottom: 10%; left: 5%; }
 
-        /* --- Content Styling --- */
-        h1 { font-size: clamp(2.8rem, 5vw, 4.5rem); line-height: 1.1; margin-bottom: 24px; font-weight: 800; letter-spacing: -2px; }
+        h1 { font-size: clamp(2.5rem, 5vw, 4.5rem); line-height: 1.1; margin-bottom: 24px; font-weight: 800; }
         h1 span { background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        p { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 40px; max-width: 520px; }
-        
-        .cta-btn {
-            padding: 18px 36px; border-radius: 14px; text-decoration: none;
-            font-weight: 700; background: var(--primary); color: white;
-            box-shadow: 0 15px 30px rgba(99, 102, 241, 0.2); transition: 0.3s;
-            display: inline-block;
-        }
-        .cta-btn:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(99, 102, 241, 0.3); }
+        p { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 40px; }
 
-        /* --- Hero Visual --- */
-        .hero-visual { position: relative; perspective: 1000px; }
-        .glass-card {
-            width: 100%; aspect-ratio: 4/3; border-radius: 40px; overflow: hidden;
+        .btn { padding: 16px 32px; border-radius: 14px; text-decoration: none; font-weight: 700; display: inline-block; transition: 0.3s; border: none; cursor: pointer; }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 15px 30px rgba(99, 102, 241, 0.2); }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 20px 40px rgba(99, 102, 241, 0.3); }
+
+        /* Video Card */
+        .glass-card { 
+            width: 100%; aspect-ratio: 4/3; border-radius: 40px; overflow: hidden; 
             box-shadow: 0 40px 80px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.4);
-            animation: float 6s ease-in-out infinite; transform-style: preserve-3d;
+            position: relative; animation: float 6s ease-in-out infinite;
         }
         .card-video { width: 100%; height: 100%; object-fit: cover; }
-        
-        .badge {
-            position: absolute; background: white; padding: 14px 22px; border-radius: 20px;
-            font-weight: 800; font-size: 0.85rem; box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-            z-index: 10; display: flex; align-items: center; gap: 10px;
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-        .badge-1 { top: -20px; right: 20px; }
-        .badge-2 { bottom: 30px; left: -30px; }
 
-        /* --- Animations --- */
-        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-20px) rotate(1deg); } }
-        
-        .reveal { opacity: 0; transform: translateY(40px); transition: 1.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        /* Game Container */
+        #game-box { 
+            width: 100%; height: 500px; background: #0f172a; border-radius: 30px; 
+            position: relative; overflow: hidden; margin-top: 50px; 
+        }
+        #gameCanvas { width: 100%; height: 100%; }
+        .game-ui { position: absolute; top: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; pointer-events: none; }
+        .game-btn { pointer-events: all; margin-top: 20px; }
+
+        /* Animations */
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        .reveal { opacity: 0; transform: translateY(30px); transition: 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .reveal.active { opacity: 1; transform: translateY(0); }
 
         @media (max-width: 968px) {
-            .hero-container { grid-template-columns: 1fr; text-align: center; padding-top: 120px; }
-            .hero-content { display: flex; flex-direction: column; align-items: center; }
-            .badge { display: none; }
-            .hero { height: auto; padding-bottom: 80px; }
+            .hero-grid { grid-template-columns: 1fr; text-align: center; }
+            .hero { height: auto; }
         }
     </style>
 </head>
@@ -125,27 +95,24 @@
 
     <nav class="navbar">
         <div class="nav-container">
-            <a href="#" class="logo">GITHUB<span>.</span>PAGES</a>
-            <a href="#" class="nav-cta">View Source</a>
+            <a href="#" class="logo">MOTION<span>.</span>IO</a>
+            <a href="#contact" class="nav-cta btn-primary" style="padding: 10px 20px; font-size: 0.8rem;">Let's Talk</a>
         </div>
     </nav>
 
-    <section class="hero">
-        <div class="blob" id="blob1"></div>
-        <div class="blob" id="blob2"></div>
+    <div class="blob" id="blob1"></div>
+    <div class="blob" id="blob2"></div>
 
-        <div class="hero-container">
+    <section class="section hero">
+        <div class="hero-grid">
             <div class="hero-content">
-                <h1 class="reveal">Build with <span>Dynamic</span> Motion</h1>
-                <p class="reveal">A high-performance hero template optimized for GitHub Pages. Fast, fluid, and fully responsive.</p>
+                <h1 class="reveal">Create the <span>Future</span> of Motion</h1>
+                <p class="reveal">A high-performance interactive template built for GitHub Pages. Smooth animations, glassmorphism, and a built-in game engine.</p>
                 <div class="reveal">
-                    <a href="#" class="cta-btn">Clone Repository</a>
+                    <a href="#game" class="btn btn-primary">Play Game</a>
                 </div>
             </div>
-
             <div class="hero-visual reveal">
-                <div class="badge badge-1">🚀 100 Lighthouse</div>
-                <div class="badge badge-2">✨ Smooth 60fps</div>
                 <div class="glass-card">
                     <video autoplay muted loop playsinline class="card-video">
                         <source src="https://assets.mixkit.co/videos/preview/mixkit-abstract-gradient-background-20234-large.mp4" type="video/mp4">
@@ -155,60 +122,101 @@
         </div>
     </section>
 
+    <section class="section" id="game">
+        <h2 class="reveal" style="text-align: center; margin-bottom: 30px;">Interactive <span>Survival</span></h2>
+        <div id="game-box" class="reveal">
+            <div class="game-ui">
+                <div id="score">SCORE: 0</div>
+                <div id="best">BEST: 0</div>
+                <button id="start-btn" class="btn btn-primary game-btn">START MISSION</button>
+                <button id="share-btn" class="btn" style="display:none; color: white;">SAVE SCORE CARD</button>
+            </div>
+            <canvas id="gameCanvas"></canvas>
+        </div>
+    </section>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // 1. Entrance Animations
+            // 1. Entrance Logic
             const reveals = document.querySelectorAll('.reveal');
-            reveals.forEach((el, i) => {
-                setTimeout(() => el.classList.add('active'), 150 * i);
-            });
+            reveals.forEach((el, i) => setTimeout(() => el.classList.add('active'), 150 * i));
 
-            // 2. Navbar Scroll Logic
-            window.addEventListener('scroll', () => {
-                const nav = document.querySelector('.navbar');
-                nav.classList.toggle('scrolled', window.scrollY > 50);
-            });
-
-            // 3. Magnetic Cursor & Parallax Logic
+            // 2. Custom Cursor Logic
             const dot = document.querySelector('.cursor-dot');
             const outline = document.querySelector('.cursor-outline');
-            const b1 = document.getElementById('blob1');
-            const b2 = document.getElementById('blob2');
-            
-            let mouseX = 0, mouseY = 0; // Mouse Target
-            let dotX = 0, dotY = 0;     // Dot Current
-            let outX = 0, outY = 0;     // Outline Current
+            let mx = 0, my = 0, ox = 0, oy = 0;
 
             window.addEventListener('mousemove', (e) => {
-                mouseX = e.clientX;
-                mouseY = e.clientY;
-                
-                // Direct update for dot
-                dot.style.left = mouseX + 'px';
-                dot.style.top = mouseY + 'px';
-
-                // Parallax shift for blobs
-                const moveX = (mouseX - window.innerWidth/2) * 0.02;
-                const moveY = (mouseY - window.innerHeight/2) * 0.02;
-                b1.style.transform = `translate(${moveX}px, ${moveY}px)`;
-                b2.style.transform = `translate(${-moveX}px, ${-moveY}px)`;
+                mx = e.clientX; my = e.clientY;
+                dot.style.left = mx + 'px'; dot.style.top = my + 'px';
             });
 
-            function updateCursor() {
-                // Smoothing the outline (Lerp)
-                outX += (mouseX - outX) * 0.15;
-                outY += (mouseY - outY) * 0.15;
-                outline.style.left = outX + 'px';
-                outline.style.top = outY + 'px';
-                requestAnimationFrame(updateCursor);
+            function tick() {
+                ox += (mx - ox) * 0.15; oy += (my - oy) * 0.15;
+                outline.style.left = ox + 'px'; outline.style.top = oy + 'px';
+                requestAnimationFrame(tick);
             }
-            updateCursor();
+            tick();
 
-            // 4. Hover States
-            const interactives = document.querySelectorAll('a, button, .cta-btn, .glass-card');
-            interactives.forEach(el => {
-                el.addEventListener('mouseenter', () => document.body.classList.add('cursor-active'));
-                el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-active'));
+            // 3. Game Logic
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            let gameActive = false, score = 0, enemies = [];
+            let highScore = localStorage.getItem('hs') || 0;
+            document.getElementById('best').innerText = `BEST: ${highScore}`;
+
+            function resize() { canvas.width = canvas.parentElement.offsetWidth; canvas.height = canvas.parentElement.offsetHeight; }
+            window.addEventListener('resize', resize); resize();
+
+            class Enemy {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = -20;
+                    this.speed = 2 + Math.random() * 3;
+                }
+                update() { this.y += this.speed; }
+                draw() { ctx.fillStyle = '#a855f7'; ctx.beginPath(); ctx.arc(this.x, this.y, 8, 0, Math.PI*2); ctx.fill(); }
+            }
+
+            function gameLoop() {
+                if(!gameActive) return;
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.2)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = 'white';
+                ctx.beginPath(); ctx.arc(mx - canvas.getBoundingClientRect().left, my - canvas.getBoundingClientRect().top, 10, 0, Math.PI*2); ctx.fill();
+
+                if(Math.random() < 0.05) enemies.push(new Enemy());
+
+                enemies.forEach((en, i) => {
+                    en.update(); en.draw();
+                    const dist = Math.hypot(en.x - (mx - canvas.getBoundingClientRect().left), en.y - (my - canvas.getBoundingClientRect().top));
+                    if(dist < 18) endGame();
+                    if(en.y > canvas.height) { enemies.splice(i, 1); score++; document.getElementById('score').innerText = `SCORE: ${score}`; }
+                });
+                requestAnimationFrame(gameLoop);
+            }
+
+            function endGame() {
+                gameActive = false;
+                if(score > highScore) { highScore = score; localStorage.setItem('hs', highScore); }
+                document.getElementById('best').innerText = `BEST: ${highScore}`;
+                document.getElementById('start-btn').style.display = 'block';
+                document.getElementById('share-btn').style.display = 'block';
+                enemies = [];
+            }
+
+            document.getElementById('start-btn').onclick = () => {
+                gameActive = true; score = 0; enemies = [];
+                document.getElementById('start-btn').style.display = 'none';
+                document.getElementById('share-btn').style.display = 'none';
+                gameLoop();
+            };
+
+            // Interactions
+            document.querySelectorAll('a, button').forEach(el => {
+                el.onmouseenter = () => document.body.classList.add('cursor-active');
+                el.onmouseleave = () => document.body.classList.remove('cursor-active');
             });
         });
     </script>
