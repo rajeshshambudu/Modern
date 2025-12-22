@@ -1,185 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lite-CAD Pro</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/makerjs@0.18.0/dist/browser.maker.js"></script>
-<style>
-body { margin:0; font-family:sans-serif; background:#1a1a1a; color:#eee; display:flex; }
-.sidebar { width:260px; background:#252525; padding:15px; box-sizing:border-box; }
-.canvas-container { flex:1; position:relative; }
-button{display:block;width:100%;margin:2px 0;padding:6px;background:#444;color:#fff;border:none;cursor:pointer;}
-button:hover{background:#555;}
-.status-bar{position:absolute;bottom:0;left:260px;right:0;background:rgba(30,30,30,0.9);padding:5px 20px;font-size:11px;color:#aaa;display:flex;justify-content:space-between;}
-textarea{width:100%;height:60px;background:#111;color:#0f0;border:1px solid #333;resize:none;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to DWG Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-top: 30px;
+        }
+        input[type="file"] {
+            padding: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #message {
+            margin-top: 20px;
+            color: red;
+        }
+    </style>
 </head>
 <body>
+    <h1>Image to DWG Converter</h1>
+    <form id="uploadForm">
+        <input type="file" id="imageInput" accept="image/*" required>
+        <br>
+        <button type="submit">Convert to DWG</button>
+    </form>
+    <p id="message"></p>
 
-<div class="sidebar">
-<h2>Lite-CAD Pro</h2>
-<button onclick="setMode('line')">Line</button>
-<button onclick="setMode('poly')">Polyline</button>
-<button onclick="finishPolyline()">Finish Polyline</button>
-<button onclick="setMode('move')">Move</button>
-<button onclick="setMode('copy')">Copy</button>
-<button onclick="setMode('offset')">Offset</button>
-<button onclick="setMode('trim')">Trim</button>
-<button onclick="setMode('fillet')">Fillet</button>
-<button onclick="setMode('text')">Text</button>
-<button onclick="startAreaCalc()">Area</button>
-<button onclick="insertNorthArrow()">North Arrow</button>
-<textarea id="kmlBox" placeholder="Paste KML coordinates"></textarea>
-<button onclick="importKML(document.getElementById('kmlBox').value)">Draw KML</button>
-<input type="file" id="mapInput" style="display:none" onchange="importSatellite(event)">
-<button onclick="document.getElementById('mapInput').click()">Import Map</button>
-<button onclick="exportDXF()">Export DXF</button>
-<button onclick="saveProject()">Save</button>
-<button onclick="loadProject()">Load</button>
-<button onclick="undo()">Undo</button>
-<button onclick="redo()">Redo</button>
-<button onclick="clearCanvas()">Clear All</button>
-</div>
+    <script>
+        const form = document.getElementById('uploadForm');
+        const message = document.getElementById('message');
 
-<div class="canvas-container">
-<canvas id="c"></canvas>
-<div class="status-bar">
-<div id="coords">X:0, Y:0</div>
-<div id="scale-info">Scale: 1px = 1.0 units</div>
-</div>
-</div>
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-<script>
-const canvas = new fabric.Canvas('c',{backgroundColor:'#1a1a1a',selection:true});
-let grid=20, mode='line', isDrawing=false, currentObj=null, startPoint=null;
-let realWorldScale=1, areaPoints=[], moveObj=null, offsetDist=null;
-let undoStack=[], redoStack=[];
+            const fileInput = document.getElementById('imageInput');
+            const file = fileInput.files[0];
 
-function resize(){canvas.setWidth(window.innerWidth-260);canvas.setHeight(window.innerHeight);}
-window.addEventListener('resize',resize);resize();
+            if (!file) {
+                message.textContent = "Please select an image!";
+                return;
+            }
 
-function setMode(m){ mode=m; isDrawing=false; startPoint=null; moveObj=null; }
+            message.textContent = "Uploading and converting...";
 
-function saveState(){ undoStack.push(JSON.stringify(canvas.toJSON())); redoStack=[]; }
-function undo(){ if(undoStack.length){ redoStack.push(JSON.stringify(canvas.toJSON())); canvas.loadFromJSON(undoStack.pop(),()=>canvas.renderAll()); } }
-function redo(){ if(redoStack.length){ undoStack.push(JSON.stringify(canvas.toJSON())); canvas.loadFromJSON(redoStack.pop(),()=>canvas.renderAll()); } }
+            const formData = new FormData();
+            formData.append('image', file);
 
-function getSnap(p){ return {x:Math.round(p.x/grid)*grid, y:Math.round(p.y/grid)*grid}; }
+            try {
+                const response = await fetch('YOUR_BACKEND_URL', {
+                    method: 'POST',
+                    body: formData
+                });
 
-canvas.on('mouse:down', function(o){
-let p=getSnap(canvas.getPointer(o.e));
-saveState();
-if(mode==='line'){ startPoint=p; currentObj=new fabric.Line([p.x,p.y,p.x,p.y],{stroke:'#0f0',strokeWidth:2}); canvas.add(currentObj); isDrawing=true; }
-else if(mode==='poly'){ if(!currentObj){ currentObj=new fabric.Polyline([p],{stroke:'#0f0',strokeWidth:2,fill:'transparent'}); canvas.add(currentObj); } else { let pts=currentObj.get('points'); pts.push(p); currentObj.set({points:pts}); canvas.renderAll(); } }
-else if(mode==='text'){ let txt=prompt('Text','LABEL'); if(txt) canvas.add(new fabric.IText(txt,{left:p.x,top:p.y,fill:'#fff',fontSize:16})); }
-else if(mode==='move'||mode==='copy'){ let obj=canvas.findTarget(o.e,true); if(obj&&!obj.isGrid){ moveObj=obj; startPoint=p; } }
-else if(mode==='offset'){ offsetDist=parseFloat(prompt('Offset distance:','20')); moveObj=canvas.findTarget(o.e,true); startPoint=p; }
-else if(mode==='trim'){ trimLine(p); }
-else if(mode==='fillet'){ filletLine(p); }
-});
+                if (!response.ok) throw new Error("Conversion failed!");
 
-canvas.on('mouse:move', function(o){
-let p=getSnap(canvas.getPointer(o.e));
-document.getElementById('coords').innerText=`X:${p.x}, Y:${p.y}`;
-if(isDrawing&&currentObj&&mode==='line'){ currentObj.set({x2:p.x,y2:p.y}); canvas.renderAll(); }
-if(moveObj&&(mode==='move'||mode==='copy')){ let dx=p.x-startPoint.x, dy=p.y-startPoint.y; moveObj.set({left:moveObj.left+(mode==='move'?dx:0), top:moveObj.top+(mode==='move'?dy:0)}); if(mode==='copy'){ let copy=fabric.util.object.clone(moveObj); copy.set({left:moveObj.left+dx,top:moveObj.top+dy}); canvas.add(copy);} canvas.renderAll(); startPoint=p; }
-if(moveObj&&mode==='offset'){ offsetSelected(moveObj,offsetDist); moveObj=null; }
-});
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'converted.dwg';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
 
-canvas.on('mouse:up', function(o){ isDrawing=false; moveObj=null; });
-
-function finishPolyline(){ if(currentObj && currentObj.type==='polyline'){ currentObj=null; canvas.renderAll(); } }
-
-function offsetSelected(obj,d){
-if(obj.type==='line'){ 
-    let dx=d*(obj.y2-obj.y1)/Math.hypot(obj.x2-obj.x1,obj.y2-obj.y1);
-    let dy=d*(obj.x2-obj.x1)/Math.hypot(obj.x2-obj.x1,obj.y2-obj.y1);
-    let line=new fabric.Line([obj.x1-dx,obj.y1+dy,obj.x2-dx,obj.y2+dy],{stroke:'#ff0',strokeWidth:2});
-    canvas.add(line); 
-}
-}
-
-function trimLine(pointer){
-const threshold=10; let clickedLine=null;
-canvas.getObjects('line').forEach(line=>{ if(line.isGrid) return;
-let d1=Math.hypot(pointer.x-line.x1,pointer.y-line.y1);
-let d2=Math.hypot(pointer.x-line.x2,pointer.y-line.y2);
-if(d1<threshold || d2<threshold) clickedLine=line;
-});
-if(!clickedLine){ alert("Click near a line endpoint"); return; }
-let intersection=null;
-canvas.getObjects('line').forEach(line=>{ if(line===clickedLine || line.isGrid) return;
-intersection=getLineIntersection(clickedLine,line); if(intersection) return false;
-});
-if(intersection){
-let distStart=Math.hypot(intersection.x-clickedLine.x1, intersection.y-clickedLine.y1);
-let distEnd=Math.hypot(intersection.x-clickedLine.x2, intersection.y-clickedLine.y2);
-if(distStart<distEnd) clickedLine.set({x1:intersection.x,y1:intersection.y});
-else clickedLine.set({x2:intersection.x,y2:intersection.y});
-canvas.renderAll();
-}else alert("No intersecting line found");
-}
-
-function filletLine(pointer){
-const radius=parseFloat(prompt("Enter fillet radius:","20")); if(!radius) return;
-let lines=[];
-canvas.getObjects('line').forEach(line=>{ if(line.isGrid) return;
-let d1=Math.hypot(pointer.x-line.x1,pointer.y-line.y1);
-let d2=Math.hypot(pointer.x-line.x2,pointer.y-line.y2);
-if(d1<10 || d2<10) lines.push(line);
-});
-if(lines.length<2){ alert("Click near corner of two lines"); return; }
-let [l1,l2]=lines;
-let ip=getLineIntersection(l1,l2); if(!ip){ alert("Lines do not intersect"); return; }
-let p1=movePointTowards(l1,ip,radius); let p2=movePointTowards(l2,ip,radius);
-canvas.remove(l1); canvas.remove(l2);
-canvas.add(new fabric.Line([l1.x1,l1.y1,p1.x,p1.y],{stroke:'#0f0',strokeWidth:2}));
-canvas.add(new fabric.Line([l2.x1,l2.y1,p2.x,p2.y],{stroke:'#0f0',strokeWidth:2}));
-// Draw arc using path
-let angle1=Math.atan2(l1.y2-l1.y1,l1.x2-l1.x1);
-let angle2=Math.atan2(l2.y2-l2.y1,l2.x2-l2.x1);
-let pathData=`M ${p1.x} ${p1.y} A ${radius} ${radius} 0 0 1 ${p2.x} ${p2.y}`;
-let arc = new fabric.Path(pathData,{stroke:'#ff0',fill:'transparent',strokeWidth:2});
-canvas.add(arc); canvas.renderAll();
-}
-
-function movePointTowards(line, intersection, dist){
-let dx=intersection.x-line.x1; let dy=intersection.y-line.y1;
-let len=Math.hypot(dx,dy);
-return {x:intersection.x-dx/len*dist, y:intersection.y-dy/len*dist};
-}
-
-function getLineIntersection(l1,l2){
-let x1=l1.x1, y1=l1.y1, x2=l1.x2, y2=l1.y2;
-let x3=l2.x1, y3=l2.y1, x4=l2.x2, y4=l2.y2;
-let denom=(x1-x2)*(y3-y4)-(y1-y2)*(x3-x4);
-if(denom===0) return null;
-let px=((x1*y2 - y1*x2)*(x3-x4) - (x1-x2)*(x3*y4 - y3*x4))/denom;
-let py=((x1*y2 - y1*x2)*(y3-y4) - (y1-y2)*(x3*y4 - y3*x4))/denom;
-if(px<Math.min(x1,x2)-0.1||px>Math.max(x1,x2)+0.1) return null;
-if(px<Math.min(x3,x4)-0.1||px>Math.max(x3,x4)+0.1) return null;
-if(py<Math.min(y1,y2)-0.1||py>Math.max(y1,y2)+0.1) return null;
-if(py<Math.min(y3,y4)-0.1||py>Math.max(y3,y4)+0.1) return null;
-return {x:px,y:py};
-}
-
-function startAreaCalc(){ areaPoints=[]; alert('Click points to define area'); }
-function calcArea(pts){ let sum=0; for(let i=0;i<pts.length;i++){ let j=(i+1)%pts.length; sum+=pts[i].x*pts[j].y-pts[j].x*pts[i].y; } return Math.abs(sum/2); }
-
-function insertNorthArrow(){ const group=new fabric.Group([new fabric.Line([0,0,0,-50],{stroke:'#fff',strokeWidth:2}), new fabric.Triangle({width:15,height:15,fill:'#fff',left:-7.5,top:-65}), new fabric.Text('N',{fontSize:14,fill:'#fff',top:-85,left:-5})],{left:100,top:100}); canvas.add(group); }
-
-function importKML(text){ const parser=new DOMParser(); const xml=parser.parseFromString(text,'text/xml'); const nodes=xml.getElementsByTagName('coordinates'); const scaleKML=100000; for(let node of nodes){ let pairs=node.textContent.trim().split(/\s+/); let pts=pairs.map(p=>{let a=p.split(',').map(Number); return {x:a[0],y:a[1]};}); let ox=pts[0].x,oy=pts[0].y; for(let i=0;i<pts.length-1;i++){ canvas.add(new fabric.Line([(pts[i].x-ox)*scaleKML+300,-(pts[i].y-oy)*scaleKML+300,(pts[i+1].x-ox)*scaleKML+300,-(pts[i+1].y-oy)*scaleKML+300],{stroke:'#0f0',strokeWidth:2}));}} canvas.renderAll(); }
-
-function importSatellite(e){ const reader=new FileReader(); reader.onload=(f)=>{ fabric.Image.fromURL(f.target.result,(img)=>{ img.set({opacity:0.5,selectable:true}); img.scaleToWidth(800); canvas.add(img); canvas.sendToBack(img); }); }; reader.readAsDataURL(e.target.files[0]); }
-
-function exportDXF(){ const model={paths:{}}; canvas.getObjects().forEach((obj,i)=>{ if(obj.type==='line'){ model.paths['L'+i]=new makerjs.paths.Line([obj.x1*realWorldScale,-obj.y1*realWorldScale],[obj.x2*realWorldScale,-obj.y2*realWorldScale]); }}); const dxf=makerjs.exporter.toDXF(model); const link=document.createElement('a'); link.href=URL.createObjectURL(new Blob([dxf],{type:'application/dxf'})); link.download='site_plan.dxf'; link.click(); }
-
-function saveProject(){ localStorage.setItem('liteCadPro',JSON.stringify(canvas.toJSON())); alert('Saved'); }
-function loadProject(){ canvas.loadFromJSON(localStorage.getItem('liteCadPro'),()=>{ canvas.renderAll(); }); }
-function clearCanvas(){ if(confirm('Clear all?')){ canvas.clear(); resize(); } }
-</script>
+                message.textContent = "Conversion complete! Download started.";
+            } catch (err) {
+                message.textContent = "Error: " + err.message;
+            }
+        });
+    </script>
 </body>
 </html>
 
