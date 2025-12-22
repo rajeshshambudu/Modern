@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,110 +8,86 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; color: #f8fafc; }
+        :root { --primary: #6366f1; --bg: #020617; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: #f8fafc; scroll-behavior: smooth; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .accent-gradient { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
         .text-gradient { background: linear-gradient(90deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        canvas { border-radius: 1rem; }
-        .card-hover:hover { border-color: #6366f1; transform: translateY(-4px); transition: all 0.3s ease; }
+        .card-hover:hover { border-color: var(--primary); transform: translateY(-4px); transition: all 0.3s ease; }
+        input[type="range"] { -webkit-appearance: none; background: transparent; cursor: ew-resize; }
+        #before-box { transition: width 0.05s ease-out; }
     </style>
 </head>
 <body class="overflow-x-hidden">
 
     <nav class="fixed top-0 w-full z-50 glass py-4 px-8 flex justify-between items-center">
-        <div class="text-xl font-800 tracking-tighter">S. RAJESH <span class="text-indigo-500">KUMAR</span></div>
-        <div class="space-x-6 text-sm font-medium hidden md:flex">
-            <a href="#analysis" class="hover:text-indigo-400 transition">Analysis</a>
-            <a href="#projects" class="hover:text-indigo-400 transition">Projects</a>
-            <button onclick="generateReport()" class="accent-gradient px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider">Export PDF</button>
+        <div class="text-xl font-800 tracking-tighter uppercase">S. RAJESH <span class="text-indigo-500">KUMAR</span></div>
+        <div class="hidden md:flex space-x-6 text-xs font-bold uppercase tracking-widest">
+            <a href="#dashboard" class="hover:text-indigo-400">Analysis</a>
+            <a href="#slider" class="hover:text-indigo-400">2D/3D Compare</a>
+            <button onclick="exportReport()" class="bg-indigo-600 px-4 py-2 rounded-lg hover:bg-indigo-500 transition">Download CV Report</button>
         </div>
     </nav>
 
-    <section class="h-screen flex flex-col justify-center items-center text-center px-4">
-        <div class="bg-indigo-500/10 text-indigo-400 text-xs font-bold px-3 py-1 rounded-full mb-6 border border-indigo-500/20 uppercase tracking-widest">Structural Engineer & Computational Designer</div>
-        <h1 class="text-6xl md:text-8xl font-800 tracking-tight mb-6">Designing the <br><span class="text-gradient">Structural Future.</span></h1>
-        <p class="max-w-xl text-slate-400 text-lg mb-8">Bridging the gap between ETABS analysis and interactive digital twins.</p>
-        <a href="#analysis" class="glass px-8 py-4 rounded-full font-semibold hover:bg-white/5 transition">Explore Dashboard</a>
-    </section>
+    <header class="h-screen flex flex-col justify-center items-center text-center px-6">
+        <div class="bg-indigo-500/10 text-indigo-400 text-[10px] font-bold px-3 py-1 rounded-full mb-6 border border-indigo-500/20 uppercase">Structural Innovation</div>
+        <h1 class="text-5xl md:text-8xl font-800 tracking-tight mb-4">Engineering <br><span class="text-gradient">With Data.</span></h1>
+        <p class="max-w-xl text-slate-400 text-lg mb-10">Expertise in IS 456, IS 800, and Seismic Analysis for High-Rise Structures.</p>
+        <a href="#dashboard" class="bg-white text-black px-10 py-4 rounded-full font-bold hover:scale-105 transition">Launch Dashboard</a>
+    </header>
 
-    <main id="analysis" class="container mx-auto px-6 py-20">
+    <section id="dashboard" class="container mx-auto px-6 py-20">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <div class="lg:col-span-2 glass p-8 rounded-3xl relative overflow-hidden card-hover">
-                <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h3 class="text-xl font-bold">Interactive Wireframe</h3>
-                        <p class="text-xs text-slate-500">Live Model Rendering (ETABS Simulation)</p>
+            <div class="lg:col-span-2 glass p-8 rounded-[2.5rem] card-hover">
+                <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                    <div class="flex space-x-2" id="code-selector">
+                        <button onclick="setDesignMode('IS456')" class="bg-indigo-600 px-3 py-1 rounded text-[10px] font-bold">IS 456: RCC</button>
+                        <button onclick="setDesignMode('IS800')" class="bg-slate-800 px-3 py-1 rounded text-[10px] font-bold">IS 800: STEEL</button>
                     </div>
-                    <button id="seismicBtn" class="bg-rose-500/10 text-rose-500 border border-rose-500/20 px-4 py-2 rounded-lg text-xs font-bold hover:bg-rose-500 hover:text-white transition">SIMULATE SEISMIC LOAD</button>
+                    <button id="seismicBtn" class="border border-rose-500/30 text-rose-500 px-4 py-1 rounded text-[10px] font-bold uppercase hover:bg-rose-500 hover:text-white transition">Simulate Seismic Load</button>
                 </div>
-                <div id="three-container" class="w-full h-[500px] bg-black/20 rounded-2xl cursor-move"></div>
+                <div id="three-container" class="w-full h-[500px] bg-black/30 rounded-2xl cursor-grab"></div>
+                <p id="design-status" class="text-[10px] text-slate-500 mt-4 uppercase tracking-widest font-bold text-center">Current Standard: IS 456 Concrete Design</p>
             </div>
 
             <div class="space-y-8">
-                <div class="glass p-6 rounded-3xl card-hover">
-                    <h3 class="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4">Storey Drift (STAAD.Pro)</h3>
+                <div class="glass p-6 rounded-[2.5rem] card-hover">
+                    <h4 class="text-xs font-bold text-indigo-400 uppercase mb-4">Storey Drift Analysis</h4>
                     <canvas id="driftChart"></canvas>
                 </div>
-
-                <div class="glass p-6 rounded-3xl card-hover">
-                    <h3 class="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4">Material Takeoff (BOQ)</h3>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center text-sm border-b border-white/5 pb-2">
-                            <span class="text-slate-400">Concrete M40</span>
-                            <span class="font-mono">1,240 m³</span>
-                        </div>
-                        <div class="flex justify-between items-center text-sm border-b border-white/5 pb-2">
-                            <span class="text-slate-400">Rebar Fe500</span>
-                            <span class="font-mono">112.5 MT</span>
-                        </div>
-                        <div class="flex justify-between items-center pt-2">
-                            <span class="font-bold">Total Estimate</span>
-                            <span class="text-indigo-400 font-800">$245,000</span>
-                        </div>
+                <div class="glass p-6 rounded-[2.5rem] card-hover">
+                    <h4 class="text-xs font-bold text-indigo-400 uppercase mb-4">Project Quantities</h4>
+                    <div class="space-y-4 text-sm">
+                        <div class="flex justify-between border-b border-white/5 pb-2"><span>Concrete M40</span><b>1,120 m³</b></div>
+                        <div class="flex justify-between border-b border-white/5 pb-2"><span>Steel Fe500</span><b>98 MT</b></div>
+                        <div class="flex justify-between pt-2 font-800"><span class="text-indigo-400 text-lg">Est. Cost</span><b class="text-lg">$210,500</b></div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <section id="projects" class="container mx-auto px-6 py-20 border-t border-white/5">
-        <h2 class="text-3xl font-bold mb-12">Project <span class="text-indigo-500">Gallery</span></h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="glass p-4 rounded-3xl card-hover group">
-                <div class="h-64 bg-slate-800 rounded-2xl mb-6 overflow-hidden">
-                    <div class="w-full h-full bg-indigo-500/20 flex items-center justify-center font-bold text-indigo-400 italic">ETABS Model Placeholder</div>
-                </div>
-                <div class="p-4">
-                    <span class="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-1 rounded-md uppercase font-bold">RCC Structure</span>
-                    <h4 class="text-xl font-bold mt-2">30-Storey Residential Complex</h4>
-                    <p class="text-slate-400 text-sm mt-2">Seismic analysis and shear wall optimization using IS 1893:2016 codes.</p>
-                </div>
-            </div>
-            <div class="glass p-4 rounded-3xl card-hover group">
-                <div class="h-64 bg-slate-800 rounded-2xl mb-6 overflow-hidden">
-                    <div class="w-full h-full bg-purple-500/20 flex items-center justify-center font-bold text-purple-400 italic">STAAD.Pro Model Placeholder</div>
-                </div>
-                <div class="p-4">
-                    <span class="text-[10px] bg-purple-500/10 text-purple-400 px-2 py-1 rounded-md uppercase font-bold">Steel Structure</span>
-                    <h4 class="text-xl font-bold mt-2">Industrial PEB Warehouse</h4>
-                    <p class="text-slate-400 text-sm mt-2">High-span steel truss optimization for wind loads up to 47m/s.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <footer class="py-10 text-center text-slate-600 text-xs border-t border-white/5">
-        &copy; 2025 Shambudu Rajesh Kumar. Digitally verified structural analysis portfolio.
+    <section id="slider" class="container mx-auto px-6 py-20">
+        <div class="glass p-10 rounded-[2.5rem]">
+            <h2 class="text-center text-2xl font-800 mb-8 uppercase tracking-widest">Plan to Analytical Model</h2>
+            <div class="relative w-full h-[550px] rounded-3xl overflow-hidden border border-white/10 group">
+                <div class="absolute inset-0 bg-slate-900 flex items-center justify-center font-bold text-slate-700">3D MODEL VIEWPORT</div>
+                <div id="before-box" class="absolute inset-0 bg-indigo-900 flex items-center justify-center font-bold text-white border-r-4 border-indigo-500" style="width: 50%;">2D ARCHITECTURAL PLAN</div>
+                <input type="range" min="0" max="100" value="50" class="absolute inset-0 w-full h-full opacity-0 z-20 cursor-ew-resize" id="comp-range">
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-20 text-center opacity-30 text-xs font-bold uppercase tracking-[0.2em]">
+        &copy; 2025 Shambudu Rajesh Kumar &bull; Hyderabad, India
     </footer>
 
     <script>
-        // 1. THREE.JS ENGINE
+        // 1. 3D ENGINE (THREE.JS)
         const container = document.getElementById('three-container');
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
@@ -120,73 +95,67 @@
         renderer.setSize(container.offsetWidth, container.offsetHeight);
         container.appendChild(renderer.domElement);
 
-        // Simple Building Skeleton
-        const geometry = new THREE.BoxGeometry(4, 12, 4, 2, 12, 2);
+        const geometry = new THREE.BoxGeometry(4, 15, 4, 1, 15, 1);
         const wireframe = new THREE.WireframeGeometry(geometry);
-        const building = new THREE.LineSegments(wireframe, new THREE.LineBasicMaterial({ color: 0x6366f1, transparent: true, opacity: 0.5 }));
+        const building = new THREE.LineSegments(wireframe, new THREE.LineBasicMaterial({ color: 0x6366f1 }));
         scene.add(building);
-        camera.position.z = 15;
+        camera.position.z = 20;
 
-        let seismicActive = false;
-        document.getElementById('seismicBtn').onclick = () => {
-            seismicActive = !seismicActive;
-            document.getElementById('seismicBtn').innerText = seismicActive ? "STOP SIMULATION" : "SIMULATE SEISMIC LOAD";
-        };
+        let seismic = false;
+        document.getElementById('seismicBtn').onclick = () => seismic = !seismic;
+
+        function setDesignMode(mode) {
+            const status = document.getElementById('design-status');
+            if(mode === 'IS456') {
+                building.material.color.setHex(0x6366f1);
+                status.innerText = "Current Standard: IS 456 Concrete Design";
+            } else {
+                building.material.color.setHex(0xeab308);
+                status.innerText = "Current Standard: IS 800 Steel Design";
+            }
+        }
 
         function animate() {
             requestAnimationFrame(animate);
-            if(seismicActive) {
-                building.position.x = Math.sin(Date.now() * 0.02) * 0.3;
-                building.rotation.z = Math.sin(Date.now() * 0.01) * 0.02;
+            if(seismic) {
+                building.position.x = Math.sin(Date.now() * 0.01) * 0.5;
             } else {
                 building.rotation.y += 0.005;
                 building.position.x = 0;
-                building.rotation.z = 0;
             }
             renderer.render(scene, camera);
         }
         animate();
 
-        // 2. CHART.JS ANALYTICS
-        const ctx = document.getElementById('driftChart').getContext('2d');
-        new Chart(ctx, {
+        // 2. CHARTING
+        new Chart(document.getElementById('driftChart'), {
             type: 'line',
             data: {
-                labels: ['G', '5', '10', '15', '20', '25', '30'],
-                datasets: [{
-                    label: 'Drift (mm)',
-                    data: [0, 2.4, 6.8, 12.5, 19.1, 25.4, 31.0],
+                labels: ['G', '5', '10', '15', '20'],
+                datasets: [{ 
+                    label: 'Drift (mm)', 
+                    data: [0, 1.5, 4.2, 9.1, 15.5], 
                     borderColor: '#6366f1',
-                    borderWidth: 3,
-                    tension: 0.4,
-                    fill: true,
-                    backgroundColor: 'rgba(99, 102, 241, 0.1)'
+                    tension: 0.4
                 }]
             },
-            options: {
-                plugins: { legend: { display: false } },
-                scales: { 
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
-                    x: { grid: { display: false }, ticks: { color: '#64748b' } }
-                }
-            }
+            options: { plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' } } } }
         });
 
-        // 3. PDF GENERATION
-        function generateReport() {
+        // 3. SLIDER
+        document.getElementById('comp-range').oninput = (e) => {
+            document.getElementById('before-box').style.width = e.target.value + '%';
+        };
+
+        // 4. REPORT EXPORT
+        function exportReport() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.setFontSize(20);
-            doc.text("Structural Analysis Report", 20, 20);
-            doc.setFontSize(10);
-            doc.text("Lead Engineer: Shambudu Rajesh Kumar", 20, 30);
-            doc.text("Analysis Engine: ETABS v20 / STAAD.Pro Connect", 20, 35);
-            doc.text("--------------------------------------------------", 20, 40);
-            doc.text("Project Estimate: $245,000", 20, 50);
-            doc.save("Rajesh_Kumar_Project_Report.pdf");
+            doc.text("ENGINEERING ANALYSIS: SHAMBUDU RAJESH KUMAR", 10, 20);
+            doc.text("Compliance: IS 456, IS 800", 10, 30);
+            doc.save("S_Rajesh_Kumar_Profile.pdf");
         }
 
-        // Handle Resize
         window.addEventListener('resize', () => {
             camera.aspect = container.offsetWidth / container.offsetHeight;
             camera.updateProjectionMatrix();
