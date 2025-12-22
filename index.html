@@ -1,223 +1,196 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Motion | Portfolio & Game</title>
+    <title>Shambudu Rajesh Kumar | Structural Technologist</title>
     
-    <meta name="description" content="A high-performance interactive portfolio featuring modern motion and game design.">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+
     <style>
-        :root {
-            --primary: #6366f1;
-            --secondary: #a855f7;
-            --dark: #0f172a;
-            --light: #f8fafc;
-            --text-muted: #64748b;
-            --glass: rgba(255, 255, 255, 0.7);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--light); color: var(--dark); overflow-x: hidden; scroll-behavior: smooth; }
-
-        /* Custom Cursor */
-        .cursor-dot, .cursor-outline {
-            position: fixed; top: 0; left: 0; transform: translate(-50%, -50%);
-            border-radius: 50%; z-index: 9999; pointer-events: none;
-            transition: width 0.3s, height 0.3s, background-color 0.3s;
-        }
-        .cursor-dot { width: 8px; height: 8px; background: var(--primary); }
-        .cursor-outline { width: 40px; height: 40px; border: 1.5px solid var(--primary); }
-        body.cursor-active .cursor-outline { width: 65px; height: 65px; background: rgba(99, 102, 241, 0.1); border-color: transparent; }
-        @media (min-width: 769px) { body, a, button { cursor: none; } }
-
-        /* Navbar */
-        .navbar {
-            position: fixed; top: 0; width: 100%; z-index: 1000; padding: 30px 0;
-            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .navbar.scrolled { padding: 15px 0; background: var(--glass); backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .nav-container { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 1.5rem; font-weight: 800; text-decoration: none; color: var(--dark); letter-spacing: -1px; }
-        .logo span { color: var(--primary); }
-
-        /* Hero & Layout */
-        .section { padding: 100px 24px; max-width: 1200px; margin: 0 auto; position: relative; }
-        .hero { height: 100vh; display: flex; align-items: center; padding-top: 80px; }
-        .hero-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 60px; align-items: center; width: 100%; }
-
-        /* Motion Components */
-        .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.15; z-index: -1; }
-        #blob1 { width: 500px; height: 500px; background: var(--primary); top: -100px; right: -50px; }
-        #blob2 { width: 350px; height: 350px; background: var(--secondary); bottom: 10%; left: 5%; }
-
-        h1 { font-size: clamp(2.5rem, 5vw, 4.5rem); line-height: 1.1; margin-bottom: 24px; font-weight: 800; }
-        h1 span { background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        p { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 40px; }
-
-        .btn { padding: 16px 32px; border-radius: 14px; text-decoration: none; font-weight: 700; display: inline-block; transition: 0.3s; border: none; cursor: pointer; }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 15px 30px rgba(99, 102, 241, 0.2); }
-        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 20px 40px rgba(99, 102, 241, 0.3); }
-
-        /* Video Card */
-        .glass-card { 
-            width: 100%; aspect-ratio: 4/3; border-radius: 40px; overflow: hidden; 
-            box-shadow: 0 40px 80px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.4);
-            position: relative; animation: float 6s ease-in-out infinite;
-        }
-        .card-video { width: 100%; height: 100%; object-fit: cover; }
-
-        /* Game Container */
-        #game-box { 
-            width: 100%; height: 500px; background: #0f172a; border-radius: 30px; 
-            position: relative; overflow: hidden; margin-top: 50px; 
-        }
-        #gameCanvas { width: 100%; height: 100%; }
-        .game-ui { position: absolute; top: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; pointer-events: none; }
-        .game-btn { pointer-events: all; margin-top: 20px; }
-
-        /* Animations */
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-        .reveal { opacity: 0; transform: translateY(30px); transition: 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        .reveal.active { opacity: 1; transform: translateY(0); }
-
-        @media (max-width: 968px) {
-            .hero-grid { grid-template-columns: 1fr; text-align: center; }
-            .hero { height: auto; }
-        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; color: #f8fafc; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .accent-gradient { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
+        .text-gradient { background: linear-gradient(90deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        canvas { border-radius: 1rem; }
+        .card-hover:hover { border-color: #6366f1; transform: translateY(-4px); transition: all 0.3s ease; }
     </style>
 </head>
-<body>
+<body class="overflow-x-hidden">
 
-    <div class="cursor-dot"></div>
-    <div class="cursor-outline"></div>
-
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="#" class="logo">MOTION<span>.</span>IO</a>
-            <a href="#contact" class="nav-cta btn-primary" style="padding: 10px 20px; font-size: 0.8rem;">Let's Talk</a>
+    <nav class="fixed top-0 w-full z-50 glass py-4 px-8 flex justify-between items-center">
+        <div class="text-xl font-800 tracking-tighter">S. RAJESH <span class="text-indigo-500">KUMAR</span></div>
+        <div class="space-x-6 text-sm font-medium hidden md:flex">
+            <a href="#analysis" class="hover:text-indigo-400 transition">Analysis</a>
+            <a href="#projects" class="hover:text-indigo-400 transition">Projects</a>
+            <button onclick="generateReport()" class="accent-gradient px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider">Export PDF</button>
         </div>
     </nav>
 
-    <div class="blob" id="blob1"></div>
-    <div class="blob" id="blob2"></div>
+    <section class="h-screen flex flex-col justify-center items-center text-center px-4">
+        <div class="bg-indigo-500/10 text-indigo-400 text-xs font-bold px-3 py-1 rounded-full mb-6 border border-indigo-500/20 uppercase tracking-widest">Structural Engineer & Computational Designer</div>
+        <h1 class="text-6xl md:text-8xl font-800 tracking-tight mb-6">Designing the <br><span class="text-gradient">Structural Future.</span></h1>
+        <p class="max-w-xl text-slate-400 text-lg mb-8">Bridging the gap between ETABS analysis and interactive digital twins.</p>
+        <a href="#analysis" class="glass px-8 py-4 rounded-full font-semibold hover:bg-white/5 transition">Explore Dashboard</a>
+    </section>
 
-    <section class="section hero">
-        <div class="hero-grid">
-            <div class="hero-content">
-                <h1 class="reveal">Create the <span>Future</span> of Motion</h1>
-                <p class="reveal">A high-performance interactive template built for GitHub Pages. Smooth animations, glassmorphism, and a built-in game engine.</p>
-                <div class="reveal">
-                    <a href="#game" class="btn btn-primary">Play Game</a>
+    <main id="analysis" class="container mx-auto px-6 py-20">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-2 glass p-8 rounded-3xl relative overflow-hidden card-hover">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold">Interactive Wireframe</h3>
+                        <p class="text-xs text-slate-500">Live Model Rendering (ETABS Simulation)</p>
+                    </div>
+                    <button id="seismicBtn" class="bg-rose-500/10 text-rose-500 border border-rose-500/20 px-4 py-2 rounded-lg text-xs font-bold hover:bg-rose-500 hover:text-white transition">SIMULATE SEISMIC LOAD</button>
+                </div>
+                <div id="three-container" class="w-full h-[500px] bg-black/20 rounded-2xl cursor-move"></div>
+            </div>
+
+            <div class="space-y-8">
+                <div class="glass p-6 rounded-3xl card-hover">
+                    <h3 class="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4">Storey Drift (STAAD.Pro)</h3>
+                    <canvas id="driftChart"></canvas>
+                </div>
+
+                <div class="glass p-6 rounded-3xl card-hover">
+                    <h3 class="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4">Material Takeoff (BOQ)</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center text-sm border-b border-white/5 pb-2">
+                            <span class="text-slate-400">Concrete M40</span>
+                            <span class="font-mono">1,240 m³</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm border-b border-white/5 pb-2">
+                            <span class="text-slate-400">Rebar Fe500</span>
+                            <span class="font-mono">112.5 MT</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-2">
+                            <span class="font-bold">Total Estimate</span>
+                            <span class="text-indigo-400 font-800">$245,000</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="hero-visual reveal">
-                <div class="glass-card">
-                    <video autoplay muted loop playsinline class="card-video">
-                        <source src="https://assets.mixkit.co/videos/preview/mixkit-abstract-gradient-background-20234-large.mp4" type="video/mp4">
-                    </video>
+        </div>
+    </main>
+
+    <section id="projects" class="container mx-auto px-6 py-20 border-t border-white/5">
+        <h2 class="text-3xl font-bold mb-12">Project <span class="text-indigo-500">Gallery</span></h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="glass p-4 rounded-3xl card-hover group">
+                <div class="h-64 bg-slate-800 rounded-2xl mb-6 overflow-hidden">
+                    <div class="w-full h-full bg-indigo-500/20 flex items-center justify-center font-bold text-indigo-400 italic">ETABS Model Placeholder</div>
+                </div>
+                <div class="p-4">
+                    <span class="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-1 rounded-md uppercase font-bold">RCC Structure</span>
+                    <h4 class="text-xl font-bold mt-2">30-Storey Residential Complex</h4>
+                    <p class="text-slate-400 text-sm mt-2">Seismic analysis and shear wall optimization using IS 1893:2016 codes.</p>
+                </div>
+            </div>
+            <div class="glass p-4 rounded-3xl card-hover group">
+                <div class="h-64 bg-slate-800 rounded-2xl mb-6 overflow-hidden">
+                    <div class="w-full h-full bg-purple-500/20 flex items-center justify-center font-bold text-purple-400 italic">STAAD.Pro Model Placeholder</div>
+                </div>
+                <div class="p-4">
+                    <span class="text-[10px] bg-purple-500/10 text-purple-400 px-2 py-1 rounded-md uppercase font-bold">Steel Structure</span>
+                    <h4 class="text-xl font-bold mt-2">Industrial PEB Warehouse</h4>
+                    <p class="text-slate-400 text-sm mt-2">High-span steel truss optimization for wind loads up to 47m/s.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="section" id="game">
-        <h2 class="reveal" style="text-align: center; margin-bottom: 30px;">Interactive <span>Survival</span></h2>
-        <div id="game-box" class="reveal">
-            <div class="game-ui">
-                <div id="score">SCORE: 0</div>
-                <div id="best">BEST: 0</div>
-                <button id="start-btn" class="btn btn-primary game-btn">START MISSION</button>
-                <button id="share-btn" class="btn" style="display:none; color: white;">SAVE SCORE CARD</button>
-            </div>
-            <canvas id="gameCanvas"></canvas>
-        </div>
-    </section>
+    <footer class="py-10 text-center text-slate-600 text-xs border-t border-white/5">
+        &copy; 2025 Shambudu Rajesh Kumar. Digitally verified structural analysis portfolio.
+    </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // 1. Entrance Logic
-            const reveals = document.querySelectorAll('.reveal');
-            reveals.forEach((el, i) => setTimeout(() => el.classList.add('active'), 150 * i));
+        // 1. THREE.JS ENGINE
+        const container = document.getElementById('three-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.offsetWidth, container.offsetHeight);
+        container.appendChild(renderer.domElement);
 
-            // 2. Custom Cursor Logic
-            const dot = document.querySelector('.cursor-dot');
-            const outline = document.querySelector('.cursor-outline');
-            let mx = 0, my = 0, ox = 0, oy = 0;
+        // Simple Building Skeleton
+        const geometry = new THREE.BoxGeometry(4, 12, 4, 2, 12, 2);
+        const wireframe = new THREE.WireframeGeometry(geometry);
+        const building = new THREE.LineSegments(wireframe, new THREE.LineBasicMaterial({ color: 0x6366f1, transparent: true, opacity: 0.5 }));
+        scene.add(building);
+        camera.position.z = 15;
 
-            window.addEventListener('mousemove', (e) => {
-                mx = e.clientX; my = e.clientY;
-                dot.style.left = mx + 'px'; dot.style.top = my + 'px';
-            });
+        let seismicActive = false;
+        document.getElementById('seismicBtn').onclick = () => {
+            seismicActive = !seismicActive;
+            document.getElementById('seismicBtn').innerText = seismicActive ? "STOP SIMULATION" : "SIMULATE SEISMIC LOAD";
+        };
 
-            function tick() {
-                ox += (mx - ox) * 0.15; oy += (my - oy) * 0.15;
-                outline.style.left = ox + 'px'; outline.style.top = oy + 'px';
-                requestAnimationFrame(tick);
+        function animate() {
+            requestAnimationFrame(animate);
+            if(seismicActive) {
+                building.position.x = Math.sin(Date.now() * 0.02) * 0.3;
+                building.rotation.z = Math.sin(Date.now() * 0.01) * 0.02;
+            } else {
+                building.rotation.y += 0.005;
+                building.position.x = 0;
+                building.rotation.z = 0;
             }
-            tick();
+            renderer.render(scene, camera);
+        }
+        animate();
 
-            // 3. Game Logic
-            const canvas = document.getElementById('gameCanvas');
-            const ctx = canvas.getContext('2d');
-            let gameActive = false, score = 0, enemies = [];
-            let highScore = localStorage.getItem('hs') || 0;
-            document.getElementById('best').innerText = `BEST: ${highScore}`;
-
-            function resize() { canvas.width = canvas.parentElement.offsetWidth; canvas.height = canvas.parentElement.offsetHeight; }
-            window.addEventListener('resize', resize); resize();
-
-            class Enemy {
-                constructor() {
-                    this.x = Math.random() * canvas.width;
-                    this.y = -20;
-                    this.speed = 2 + Math.random() * 3;
+        // 2. CHART.JS ANALYTICS
+        const ctx = document.getElementById('driftChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['G', '5', '10', '15', '20', '25', '30'],
+                datasets: [{
+                    label: 'Drift (mm)',
+                    data: [0, 2.4, 6.8, 12.5, 19.1, 25.4, 31.0],
+                    borderColor: '#6366f1',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)'
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { 
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
+                    x: { grid: { display: false }, ticks: { color: '#64748b' } }
                 }
-                update() { this.y += this.speed; }
-                draw() { ctx.fillStyle = '#a855f7'; ctx.beginPath(); ctx.arc(this.x, this.y, 8, 0, Math.PI*2); ctx.fill(); }
             }
+        });
 
-            function gameLoop() {
-                if(!gameActive) return;
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.2)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // 3. PDF GENERATION
+        function generateReport() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(20);
+            doc.text("Structural Analysis Report", 20, 20);
+            doc.setFontSize(10);
+            doc.text("Lead Engineer: Shambudu Rajesh Kumar", 20, 30);
+            doc.text("Analysis Engine: ETABS v20 / STAAD.Pro Connect", 20, 35);
+            doc.text("--------------------------------------------------", 20, 40);
+            doc.text("Project Estimate: $245,000", 20, 50);
+            doc.save("Rajesh_Kumar_Project_Report.pdf");
+        }
 
-                ctx.fillStyle = 'white';
-                ctx.beginPath(); ctx.arc(mx - canvas.getBoundingClientRect().left, my - canvas.getBoundingClientRect().top, 10, 0, Math.PI*2); ctx.fill();
-
-                if(Math.random() < 0.05) enemies.push(new Enemy());
-
-                enemies.forEach((en, i) => {
-                    en.update(); en.draw();
-                    const dist = Math.hypot(en.x - (mx - canvas.getBoundingClientRect().left), en.y - (my - canvas.getBoundingClientRect().top));
-                    if(dist < 18) endGame();
-                    if(en.y > canvas.height) { enemies.splice(i, 1); score++; document.getElementById('score').innerText = `SCORE: ${score}`; }
-                });
-                requestAnimationFrame(gameLoop);
-            }
-
-            function endGame() {
-                gameActive = false;
-                if(score > highScore) { highScore = score; localStorage.setItem('hs', highScore); }
-                document.getElementById('best').innerText = `BEST: ${highScore}`;
-                document.getElementById('start-btn').style.display = 'block';
-                document.getElementById('share-btn').style.display = 'block';
-                enemies = [];
-            }
-
-            document.getElementById('start-btn').onclick = () => {
-                gameActive = true; score = 0; enemies = [];
-                document.getElementById('start-btn').style.display = 'none';
-                document.getElementById('share-btn').style.display = 'none';
-                gameLoop();
-            };
-
-            // Interactions
-            document.querySelectorAll('a, button').forEach(el => {
-                el.onmouseenter = () => document.body.classList.add('cursor-active');
-                el.onmouseleave = () => document.body.classList.remove('cursor-active');
-            });
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = container.offsetWidth / container.offsetHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.offsetWidth, container.offsetHeight);
         });
     </script>
 </body>
