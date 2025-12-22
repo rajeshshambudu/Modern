@@ -3,93 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image to DWG Converter</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 50px;
-            background-color: #f0f0f0;
-        }
-        h1 {
-            color: #333;
-        }
-        form {
-            margin-top: 30px;
-        }
-        input[type="file"] {
-            padding: 10px;
-        }
-        button {
-            padding: 10px 20px;
-            margin-top: 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        #message {
-            margin-top: 20px;
-            color: red;
-        }
-    </style>
+    <title>Structural Engineering Design & Analysis</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Image to DWG Converter</h1>
-    <form id="uploadForm">
-        <input type="file" id="imageInput" accept="image/*" required>
-        <br>
-        <button type="submit">Convert to DWG</button>
-    </form>
-    <p id="message"></p>
+    <header>
+        <h1>Structural Engineering Design & Analysis</h1>
+        <nav>
+            <ul>
+                <li><a href="#components">Components</a></li>
+                <li><a href="#loads">Loads</a></li>
+                <li><a href="#materials">Materials</a></li>
+                <li><a href="#design">Design Considerations</a></li>
+                <li><a href="#boq">BOQ</a></li>
+            </ul>
+        </nav>
+    </header>
 
-    <script>
-        const form = document.getElementById('uploadForm');
-        const message = document.getElementById('message');
+    <main>
+        <!-- Structural Components Section -->
+        <section id="components">
+            <h2>Structural Components</h2>
+            <ul>
+                <li>Foundation</li>
+                <li>Columns</li>
+                <li>Beams</li>
+                <li>Slabs</li>
+                <li>Shear Walls</li>
+                <li>Roof</li>
+            </ul>
+        </section>
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        <!-- Loads Section -->
+        <section id="loads">
+            <h2>Loads on Building</h2>
+            <ul>
+                <li>Dead Load</li>
+                <li>Live Load</li>
+                <li>Environmental Loads (Wind, Earthquake, Snow)</li>
+                <li>Other Loads (Impact, Thermal, Construction)</li>
+            </ul>
+        </section>
 
-            const fileInput = document.getElementById('imageInput');
-            const file = fileInput.files[0];
+        <!-- Materials Section -->
+        <section id="materials">
+            <h2>Materials</h2>
+            <ul>
+                <li>Reinforced Concrete (RC)</li>
+                <li>Structural Steel</li>
+                <li>Composite Materials</li>
+            </ul>
+        </section>
 
-            if (!file) {
-                message.textContent = "Please select an image!";
-                return;
-            }
+        <!-- Design Considerations Section -->
+        <section id="design">
+            <h2>Design Considerations</h2>
+            <ul>
+                <li>Safety Factors</li>
+                <li>Serviceability (deflection, vibration, cracking)</li>
+                <li>Economy (efficient material usage)</li>
+                <li>Durability (corrosion, fire, weather resistance)</li>
+            </ul>
+        </section>
 
-            message.textContent = "Uploading and converting...";
+        <!-- BOQ Section -->
+        <section id="boq">
+            <h2>Bill of Quantities (BOQ)</h2>
+            <p>Upload or generate BOQ for your project:</p>
+            <input type="file" id="boqFile">
+            <button onclick="loadBOQ()">Load BOQ</button>
+            <div id="boqTableContainer"></div>
+        </section>
+    </main>
 
-            const formData = new FormData();
-            formData.append('image', file);
+    <footer>
+        <p>&copy; 2025 Structural Engineering Project | Based on Indian Standard Codes</p>
+    </footer>
 
-            try {
-                const response = await fetch('YOUR_BACKEND_URL', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) throw new Error("Conversion failed!");
-
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'converted.dwg';
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-
-                message.textContent = "Conversion complete! Download started.";
-            } catch (err) {
-                message.textContent = "Error: " + err.message;
-            }
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
 
