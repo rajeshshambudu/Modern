@@ -2,165 +2,186 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shambudu Rajesh Kumar | Structural Technologist</title>
+    <title>Lite-CAD Web (DWG Compatible)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/makerjs@0.18.0/dist/browser.maker.js"></script>
     
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
-
     <style>
-        :root { --primary: #6366f1; --bg: #020617; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: #f8fafc; scroll-behavior: smooth; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .text-gradient { background: linear-gradient(90deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .card-hover:hover { border-color: var(--primary); transform: translateY(-4px); transition: all 0.3s ease; }
-        input[type="range"] { -webkit-appearance: none; background: transparent; cursor: ew-resize; }
-        #before-box { transition: width 0.05s ease-out; }
+        body { margin: 0; background: #1a1a1a; color: #eee; font-family: 'Segoe UI', sans-serif; overflow: hidden; display: flex; }
+        
+        /* Sidebar & Toolbars */
+        .toolbar { position: absolute; top: 10px; left: 10px; z-index: 10; display: flex; gap: 8px; background: #333; padding: 12px; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); align-items: center; }
+        .properties-panel { width: 240px; background: #252525; border-left: 1px solid #444; padding: 20px; display: none; flex-direction: column; z-index: 20; height: 100vh; position: absolute; right: 0; }
+        
+        /* Canvas Styling */
+        .canvas-container { cursor: crosshair !important; flex-grow: 1; }
+        
+        /* UI Elements */
+        button, select, input { background: #444; color: white; border: 1px solid #555; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+        button:hover { background: #555; }
+        .btn-primary { background: #0078d4; border: none; font-weight: bold; }
+        .label { font-size: 10px; color: #888; margin-bottom: 4px; display: block; text-transform: uppercase; }
+        .input-group { margin-bottom: 15px; }
+        
+        /* Status Bar */
+        .status-bar { position: absolute; bottom: 0; width: 100%; background: #333; padding: 5px 20px; font-size: 12px; color: #aaa; border-top: 1px solid #444; z-index: 5; }
     </style>
 </head>
-<body class="overflow-x-hidden">
+<body>
 
-    <nav class="fixed top-0 w-full z-50 glass py-4 px-8 flex justify-between items-center">
-        <div class="text-xl font-800 tracking-tighter uppercase">S. RAJESH <span class="text-indigo-500">KUMAR</span></div>
-        <div class="hidden md:flex space-x-6 text-xs font-bold uppercase tracking-widest">
-            <a href="#dashboard" class="hover:text-indigo-400">Analysis</a>
-            <a href="#slider" class="hover:text-indigo-400">2D/3D Compare</a>
-            <button onclick="exportReport()" class="bg-indigo-600 px-4 py-2 rounded-lg hover:bg-indigo-500 transition">Download CV Report</button>
+    <div class="toolbar">
+        <select id="layerSelect">
+            <option value="0" data-color="#ffffff">Layer 0 (White)</option>
+            <option value="WALLS" data-color="#00ff00">Walls (Green)</option>
+            <option value="CENTER" data-color="#ff0000">Center (Red)</option>
+            <option value="HIDDEN" data-color="#ffff00">Hidden (Yellow)</option>
+        </select>
+        <button onclick="setMode('line')">Line</button>
+        <button onclick="setMode('rect')">Rect</button>
+        <button class="btn-primary" onclick="exportDXF()">Export DXF/DWG</button>
+        <button onclick="canvas.clear(); drawGrid();" style="color: #ff5f57;">Clear</button>
+    </div>
+
+    <canvas id="c"></canvas>
+
+    <div id="propertiesPanel" class="properties-panel">
+        <h3 style="margin: 0 0 15px 0; font-size: 14px; color: #0078d4;">PROPERTIES</h3>
+        <div class="input-group">
+            <span class="label">Layer</span>
+            <select id="propLayer" style="width: 100%;"></select>
         </div>
-    </nav>
-
-    <header class="h-screen flex flex-col justify-center items-center text-center px-6">
-        <div class="bg-indigo-500/10 text-indigo-400 text-[10px] font-bold px-3 py-1 rounded-full mb-6 border border-indigo-500/20 uppercase">Structural Innovation</div>
-        <h1 class="text-5xl md:text-8xl font-800 tracking-tight mb-4">Engineering <br><span class="text-gradient">With Data.</span></h1>
-        <p class="max-w-xl text-slate-400 text-lg mb-10">Expertise in IS 456, IS 800, and Seismic Analysis for High-Rise Structures.</p>
-        <a href="#dashboard" class="bg-white text-black px-10 py-4 rounded-full font-bold hover:scale-105 transition">Launch Dashboard</a>
-    </header>
-
-    <section id="dashboard" class="container mx-auto px-6 py-20">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <div class="lg:col-span-2 glass p-8 rounded-[2.5rem] card-hover">
-                <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
-                    <div class="flex space-x-2" id="code-selector">
-                        <button onclick="setDesignMode('IS456')" class="bg-indigo-600 px-3 py-1 rounded text-[10px] font-bold">IS 456: RCC</button>
-                        <button onclick="setDesignMode('IS800')" class="bg-slate-800 px-3 py-1 rounded text-[10px] font-bold">IS 800: STEEL</button>
-                    </div>
-                    <button id="seismicBtn" class="border border-rose-500/30 text-rose-500 px-4 py-1 rounded text-[10px] font-bold uppercase hover:bg-rose-500 hover:text-white transition">Simulate Seismic Load</button>
-                </div>
-                <div id="three-container" class="w-full h-[500px] bg-black/30 rounded-2xl cursor-grab"></div>
-                <p id="design-status" class="text-[10px] text-slate-500 mt-4 uppercase tracking-widest font-bold text-center">Current Standard: IS 456 Concrete Design</p>
-            </div>
-
-            <div class="space-y-8">
-                <div class="glass p-6 rounded-[2.5rem] card-hover">
-                    <h4 class="text-xs font-bold text-indigo-400 uppercase mb-4">Storey Drift Analysis</h4>
-                    <canvas id="driftChart"></canvas>
-                </div>
-                <div class="glass p-6 rounded-[2.5rem] card-hover">
-                    <h4 class="text-xs font-bold text-indigo-400 uppercase mb-4">Project Quantities</h4>
-                    <div class="space-y-4 text-sm">
-                        <div class="flex justify-between border-b border-white/5 pb-2"><span>Concrete M40</span><b>1,120 m³</b></div>
-                        <div class="flex justify-between border-b border-white/5 pb-2"><span>Steel Fe500</span><b>98 MT</b></div>
-                        <div class="flex justify-between pt-2 font-800"><span class="text-indigo-400 text-lg">Est. Cost</span><b class="text-lg">$210,500</b></div>
-                    </div>
-                </div>
+        <div class="input-group">
+            <span class="label">Coordinates</span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                <input type="number" id="propX1" step="10"> <input type="number" id="propY1" step="10">
+                <input type="number" id="propX2" step="10"> <input type="number" id="propY2" step="10">
             </div>
         </div>
-    </section>
+        <button onclick="deleteObject()" style="background: #a33; border:none; margin-top: auto;">Delete Selected</button>
+    </div>
 
-    <section id="slider" class="container mx-auto px-6 py-20">
-        <div class="glass p-10 rounded-[2.5rem]">
-            <h2 class="text-center text-2xl font-800 mb-8 uppercase tracking-widest">Plan to Analytical Model</h2>
-            <div class="relative w-full h-[550px] rounded-3xl overflow-hidden border border-white/10 group">
-                <div class="absolute inset-0 bg-slate-900 flex items-center justify-center font-bold text-slate-700">3D MODEL VIEWPORT</div>
-                <div id="before-box" class="absolute inset-0 bg-indigo-900 flex items-center justify-center font-bold text-white border-r-4 border-indigo-500" style="width: 50%;">2D ARCHITECTURAL PLAN</div>
-                <input type="range" min="0" max="100" value="50" class="absolute inset-0 w-full h-full opacity-0 z-20 cursor-ew-resize" id="comp-range">
-            </div>
-        </div>
-    </section>
-
-    <footer class="py-20 text-center opacity-30 text-xs font-bold uppercase tracking-[0.2em]">
-        &copy; 2025 Shambudu Rajesh Kumar &bull; Hyderabad, India
-    </footer>
+    <div class="status-bar" id="coords">X: 0, Y: 0 | Snap: 20px | Alt+Click to Pan</div>
 
     <script>
-        // 1. 3D ENGINE (THREE.JS)
-        const container = document.getElementById('three-container');
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(container.offsetWidth, container.offsetHeight);
-        container.appendChild(renderer.domElement);
+        const canvas = new fabric.Canvas('c', { backgroundColor: '#1a1a1a', selection: true });
+        let grid = 20;
+        let mode = 'line';
+        let isDrawing = false;
+        let currentObj;
 
-        const geometry = new THREE.BoxGeometry(4, 15, 4, 1, 15, 1);
-        const wireframe = new THREE.WireframeGeometry(geometry);
-        const building = new THREE.LineSegments(wireframe, new THREE.LineBasicMaterial({ color: 0x6366f1 }));
-        scene.add(building);
-        camera.position.z = 20;
+        // Initialize Canvas Size
+        function resize() {
+            canvas.setWidth(window.innerWidth);
+            canvas.setHeight(window.innerHeight);
+            drawGrid();
+        }
+        window.addEventListener('resize', resize);
+        resize();
 
-        let seismic = false;
-        document.getElementById('seismicBtn').onclick = () => seismic = !seismic;
-
-        function setDesignMode(mode) {
-            const status = document.getElementById('design-status');
-            if(mode === 'IS456') {
-                building.material.color.setHex(0x6366f1);
-                status.innerText = "Current Standard: IS 456 Concrete Design";
-            } else {
-                building.material.color.setHex(0xeab308);
-                status.innerText = "Current Standard: IS 800 Steel Design";
+        function drawGrid() {
+            canvas.getObjects('line').filter(l => l.isGrid).forEach(l => canvas.remove(l));
+            for (let i = 0; i < (canvas.width / grid); i++) {
+                canvas.add(new fabric.Line([i * grid, 0, i * grid, canvas.height], { stroke: '#2a2a2a', selectable: false, evented: false, isGrid: true }));
+                canvas.add(new fabric.Line([0, i * grid, canvas.width, i * grid], { stroke: '#2a2a2a', selectable: false, evented: false, isGrid: true }));
             }
+            canvas.sendToBack(canvas.getObjects().find(o => o.isGrid));
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            if(seismic) {
-                building.position.x = Math.sin(Date.now() * 0.01) * 0.5;
-            } else {
-                building.rotation.y += 0.005;
-                building.position.x = 0;
-            }
-            renderer.render(scene, camera);
-        }
-        animate();
+        function setMode(m) { mode = m; canvas.discardActiveObject().renderAll(); }
 
-        // 2. CHARTING
-        new Chart(document.getElementById('driftChart'), {
-            type: 'line',
-            data: {
-                labels: ['G', '5', '10', '15', '20'],
-                datasets: [{ 
-                    label: 'Drift (mm)', 
-                    data: [0, 1.5, 4.2, 9.1, 15.5], 
-                    borderColor: '#6366f1',
-                    tension: 0.4
-                }]
-            },
-            options: { plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' } } } }
+        // MOUSE EVENTS: Drawing & Snapping
+        canvas.on('mouse:down', function(o) {
+            if (o.e.altKey || o.e.button === 1) { this.isDragging = true; return; }
+            if (canvas.getActiveObject()) return;
+
+            isDrawing = true;
+            let pointer = canvas.getPointer(o.e);
+            let snapX = Math.round(pointer.x / grid) * grid;
+            let snapY = Math.round(pointer.y / grid) * grid;
+
+            const layerEl = document.getElementById('layerSelect');
+            const layerColor = layerEl.options[layerEl.selectedIndex].getAttribute('data-color');
+
+            if (mode === 'line') {
+                currentObj = new fabric.Line([snapX, snapY, snapX, snapY], { stroke: layerColor, strokeWidth: 2, selectable: true });
+                currentObj.layer = layerEl.value;
+            }
+            canvas.add(currentObj);
         });
 
-        // 3. SLIDER
-        document.getElementById('comp-range').oninput = (e) => {
-            document.getElementById('before-box').style.width = e.target.value + '%';
-        };
+        canvas.on('mouse:move', function(o) {
+            let pointer = canvas.getPointer(o.e);
+            let snapX = Math.round(pointer.x / grid) * grid;
+            let snapY = Math.round(pointer.y / grid) * grid;
+            document.getElementById('coords').innerText = `X: ${snapX}, Y: ${Math.round(canvas.height - snapY)} | Snap: 20px | Alt+Click to Pan`;
 
-        // 4. REPORT EXPORT
-        function exportReport() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text("ENGINEERING ANALYSIS: SHAMBUDU RAJESH KUMAR", 10, 20);
-            doc.text("Compliance: IS 456, IS 800", 10, 30);
-            doc.save("S_Rajesh_Kumar_Profile.pdf");
+            if (this.isDragging) {
+                let vpt = this.viewportTransform;
+                vpt[4] += o.e.movementX;
+                vpt[5] += o.e.movementY;
+                this.requestRenderAll();
+                return;
+            }
+
+            if (!isDrawing) return;
+            currentObj.set({ x2: snapX, y2: snapY });
+            canvas.renderAll();
+        });
+
+        canvas.on('mouse:up', () => { isDrawing = false; this.isDragging = false; });
+
+        // ZOOM
+        canvas.on('mouse:wheel', function(opt) {
+            let delta = opt.e.deltaY;
+            let zoom = canvas.getZoom() * (0.999 ** delta);
+            canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+            opt.e.preventDefault();
+        });
+
+        // PROPERTIES LOGIC
+        canvas.on('selection:created', (e) => updatePanel(e.selected[0]));
+        canvas.on('selection:updated', (e) => updatePanel(e.selected[0]));
+        canvas.on('selection:cleared', () => document.getElementById('propertiesPanel').style.display = 'none');
+
+        function updatePanel(obj) {
+            const panel = document.getElementById('propertiesPanel');
+            panel.style.display = 'flex';
+            document.getElementById('propX1').value = obj.x1;
+            document.getElementById('propY1').value = obj.y1;
+            document.getElementById('propX2').value = obj.x2;
+            document.getElementById('propY2').value = obj.y2;
+            
+            const pLayer = document.getElementById('propLayer');
+            pLayer.innerHTML = document.getElementById('layerSelect').innerHTML;
+            pLayer.value = obj.layer || "0";
+            
+            pLayer.onchange = (e) => {
+                obj.layer = e.target.value;
+                obj.set({ stroke: e.target.options[e.target.selectedIndex].getAttribute('data-color') });
+                canvas.renderAll();
+            };
         }
 
-        window.addEventListener('resize', () => {
-            camera.aspect = container.offsetWidth / container.offsetHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.offsetWidth, container.offsetHeight);
-        });
+        function deleteObject() { canvas.remove(canvas.getActiveObject()); }
+
+        // EXPORT TO DXF
+        function exportDXF() {
+            const makerjs = window.require('makerjs');
+            const model = { paths: {} };
+            canvas.getObjects().forEach((obj, i) => {
+                if (obj.type === 'line' && !obj.isGrid) {
+                    const line = new makerjs.paths.Line([obj.x1, -obj.y1], [obj.x2, -obj.y2]);
+                    line.layer = obj.layer || "0";
+                    model.paths['L' + i] = line;
+                }
+            });
+            const dxf = makerjs.exporter.toDXF(model);
+            const blob = new Blob([dxf], {type: 'application/dxf'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'web_cad_drawing.dxf';
+            link.click();
+        }
     </script>
 </body>
 </html>
