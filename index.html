@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,6 +22,7 @@ textarea{width:100%;height:60px;background:#111;color:#0f0;border:1px solid #333
 <h2>Lite-CAD Pro</h2>
 <button onclick="setMode('line')">Line</button>
 <button onclick="setMode('poly')">Polyline</button>
+<button onclick="finishPolyline()">Finish Polyline</button>
 <button onclick="setMode('move')">Move</button>
 <button onclick="setMode('copy')">Copy</button>
 <button onclick="setMode('offset')">Offset</button>
@@ -38,6 +38,8 @@ textarea{width:100%;height:60px;background:#111;color:#0f0;border:1px solid #333
 <button onclick="exportDXF()">Export DXF</button>
 <button onclick="saveProject()">Save</button>
 <button onclick="loadProject()">Load</button>
+<button onclick="undo()">Undo</button>
+<button onclick="redo()">Redo</button>
 <button onclick="clearCanvas()">Clear All</button>
 </div>
 
@@ -50,25 +52,25 @@ textarea{width:100%;height:60px;background:#111;color:#0f0;border:1px solid #333
 </div>
 
 <script>
-// ----------------- Setup -----------------
 const canvas = new fabric.Canvas('c',{backgroundColor:'#1a1a1a',selection:true});
 let grid=20, mode='line', isDrawing=false, currentObj=null, startPoint=null;
 let realWorldScale=1, areaPoints=[], moveObj=null, offsetDist=null;
+let undoStack=[], redoStack=[];
 
 function resize(){canvas.setWidth(window.innerWidth-260);canvas.setHeight(window.innerHeight);}
 window.addEventListener('resize',resize);resize();
 
 function setMode(m){ mode=m; isDrawing=false; startPoint=null; moveObj=null; }
 
-// ----------------- Snapping -----------------
-function getSnap(p){
-let x=Math.round(p.x/grid)*grid, y=Math.round(p.y/grid)*grid;
-return {x,y};
-}
+function saveState(){ undoStack.push(JSON.stringify(canvas.toJSON())); redoStack=[]; }
+function undo(){ if(undoStack.length){ redoStack.push(JSON.stringify(canvas.toJSON())); canvas.loadFromJSON(undoStack.pop(),()=>canvas.renderAll()); } }
+function redo(){ if(redoStack.length){ undoStack.push(JSON.stringify(canvas.toJSON())); canvas.loadFromJSON(redoStack.pop(),()=>canvas.renderAll()); } }
 
-// ----------------- Mouse Events -----------------
+function getSnap(p){ return {x:Math.round(p.x/grid)*grid, y:Math.round(p.y/grid)*grid}; }
+
 canvas.on('mouse:down', function(o){
 let p=getSnap(canvas.getPointer(o.e));
+saveState();
 if(mode==='line'){ startPoint=p; currentObj=new fabric.Line([p.x,p.y,p.x,p.y],{stroke:'#0f0',strokeWidth:2}); canvas.add(currentObj); isDrawing=true; }
 else if(mode==='poly'){ if(!currentObj){ currentObj=new fabric.Polyline([p],{stroke:'#0f0',strokeWidth:2,fill:'transparent'}); canvas.add(currentObj); } else { let pts=currentObj.get('points'); pts.push(p); currentObj.set({points:pts}); canvas.renderAll(); } }
 else if(mode==='text'){ let txt=prompt('Text','LABEL'); if(txt) canvas.add(new fabric.IText(txt,{left:p.x,top:p.y,fill:'#fff',fontSize:16})); }
@@ -88,80 +90,81 @@ if(moveObj&&mode==='offset'){ offsetSelected(moveObj,offsetDist); moveObj=null; 
 
 canvas.on('mouse:up', function(o){ isDrawing=false; moveObj=null; });
 
-// ----------------- CAD Functions -----------------
-function offsetSelected(obj,d){
-if(obj.type==='line'){ let dx=d*(obj.y2-obj.y1)/Math.hypot(obj.x2-obj.x1,obj.y2-obj.y1); let dy=d*(obj.x2-obj.x1)/Math.hypot(obj.x2-obj.x1,obj.y2-obj.y1); let line=new fabric.Line([obj.x1-dx,obj.y1+dy,obj.x2-dx,obj.y2+dy],{stroke:'#ff0',strokeWidth:2}); canvas.add(line); } }
+function finishPolyline(){ if(currentObj && currentObj.type==='polyline'){ currentObj=null; canvas.renderAll(); } }
 
-function trimLine(pointer) {
-    const threshold = 10; 
-    let clickedLine = null;
-    canvas.getObjects('line').forEach(line => {
-        if (line.isGrid) return;
-        let d1 = Math.hypot(pointer.x - line.x1, pointer.y - line.y1);
-        let d2 = Math.hypot(pointer.x - line.x2, pointer.y - line.y2);
-        if (d1 < threshold || d2 < threshold) clickedLine = line;
-    });
-    if (!clickedLine) { alert("Click near a line endpoint"); return; }
-    let intersection = null;
-    canvas.getObjects('line').forEach(line => {
-        if (line === clickedLine || line.isGrid) return;
-        intersection = getLineIntersection(clickedLine, line);
-        if (intersection) return false;
-    });
-    if (intersection) {
-        let distStart = Math.hypot(intersection.x - clickedLine.x1, intersection.y - clickedLine.y1);
-        let distEnd = Math.hypot(intersection.x - clickedLine.x2, intersection.y - clickedLine.y2);
-        if (distStart < distEnd) clickedLine.set({x1: intersection.x, y1: intersection.y});
-        else clickedLine.set({x2: intersection.x, y2: intersection.y});
-        canvas.renderAll();
-    } else alert("No intersecting line found");
+function offsetSelected(obj,d){
+if(obj.type==='line'){ 
+    let dx=d*(obj.y2-obj.y1)/Math.hypot(obj.x2-obj.x1,obj.y2-obj.y1);
+    let dy=d*(obj.x2-obj.x1)/Math.hypot(obj.x2-obj.x1,obj.y2-obj.y1);
+    let line=new fabric.Line([obj.x1-dx,obj.y1+dy,obj.x2-dx,obj.y2+dy],{stroke:'#ff0',strokeWidth:2});
+    canvas.add(line); 
+}
+}
+
+function trimLine(pointer){
+const threshold=10; let clickedLine=null;
+canvas.getObjects('line').forEach(line=>{ if(line.isGrid) return;
+let d1=Math.hypot(pointer.x-line.x1,pointer.y-line.y1);
+let d2=Math.hypot(pointer.x-line.x2,pointer.y-line.y2);
+if(d1<threshold || d2<threshold) clickedLine=line;
+});
+if(!clickedLine){ alert("Click near a line endpoint"); return; }
+let intersection=null;
+canvas.getObjects('line').forEach(line=>{ if(line===clickedLine || line.isGrid) return;
+intersection=getLineIntersection(clickedLine,line); if(intersection) return false;
+});
+if(intersection){
+let distStart=Math.hypot(intersection.x-clickedLine.x1, intersection.y-clickedLine.y1);
+let distEnd=Math.hypot(intersection.x-clickedLine.x2, intersection.y-clickedLine.y2);
+if(distStart<distEnd) clickedLine.set({x1:intersection.x,y1:intersection.y});
+else clickedLine.set({x2:intersection.x,y2:intersection.y});
+canvas.renderAll();
+}else alert("No intersecting line found");
 }
 
 function filletLine(pointer){
-    const radius = parseFloat(prompt("Enter fillet radius:", "20"));
-    if (!radius) return;
-    let lines=[];
-    canvas.getObjects('line').forEach(line => {
-        if (line.isGrid) return;
-        let d1 = Math.hypot(pointer.x - line.x1, pointer.y - line.y1);
-        let d2 = Math.hypot(pointer.x - line.x2, pointer.y - line.y2);
-        if (d1 < 10 || d2 < 10) lines.push(line);
-    });
-    if(lines.length<2){ alert("Click near corner of two lines"); return; }
-    let [l1,l2]=lines;
-    let ip=getLineIntersection(l1,l2);
-    if(!ip){ alert("Lines do not intersect"); return; }
-    let p1=movePointTowards(l1,ip,radius);
-    let p2=movePointTowards(l2,ip,radius);
-    canvas.remove(l1); canvas.remove(l2);
-    canvas.add(new fabric.Line([l1.x1,l1.y1,p1.x,p1.y],{stroke:'#0f0',strokeWidth:2}));
-    canvas.add(new fabric.Line([l2.x1,l2.y1,p2.x,p2.y],{stroke:'#0f0',strokeWidth:2}));
-    let arc = new fabric.Circle({left:ip.x-radius, top:ip.y-radius, radius:radius, startAngle:0, endAngle:Math.PI/2, stroke:'#ff0', fill:'transparent', strokeWidth:2});
-    canvas.add(arc); canvas.renderAll();
+const radius=parseFloat(prompt("Enter fillet radius:","20")); if(!radius) return;
+let lines=[];
+canvas.getObjects('line').forEach(line=>{ if(line.isGrid) return;
+let d1=Math.hypot(pointer.x-line.x1,pointer.y-line.y1);
+let d2=Math.hypot(pointer.x-line.x2,pointer.y-line.y2);
+if(d1<10 || d2<10) lines.push(line);
+});
+if(lines.length<2){ alert("Click near corner of two lines"); return; }
+let [l1,l2]=lines;
+let ip=getLineIntersection(l1,l2); if(!ip){ alert("Lines do not intersect"); return; }
+let p1=movePointTowards(l1,ip,radius); let p2=movePointTowards(l2,ip,radius);
+canvas.remove(l1); canvas.remove(l2);
+canvas.add(new fabric.Line([l1.x1,l1.y1,p1.x,p1.y],{stroke:'#0f0',strokeWidth:2}));
+canvas.add(new fabric.Line([l2.x1,l2.y1,p2.x,p2.y],{stroke:'#0f0',strokeWidth:2}));
+// Draw arc using path
+let angle1=Math.atan2(l1.y2-l1.y1,l1.x2-l1.x1);
+let angle2=Math.atan2(l2.y2-l2.y1,l2.x2-l2.x1);
+let pathData=`M ${p1.x} ${p1.y} A ${radius} ${radius} 0 0 1 ${p2.x} ${p2.y}`;
+let arc = new fabric.Path(pathData,{stroke:'#ff0',fill:'transparent',strokeWidth:2});
+canvas.add(arc); canvas.renderAll();
 }
 
 function movePointTowards(line, intersection, dist){
-    let dx = intersection.x - line.x1;
-    let dy = intersection.y - line.y1;
-    let len = Math.hypot(dx, dy);
-    return {x: intersection.x - dx/len*dist, y: intersection.y - dy/len*dist};
+let dx=intersection.x-line.x1; let dy=intersection.y-line.y1;
+let len=Math.hypot(dx,dy);
+return {x:intersection.x-dx/len*dist, y:intersection.y-dy/len*dist};
 }
 
 function getLineIntersection(l1,l2){
-    let x1=l1.x1, y1=l1.y1, x2=l1.x2, y2=l1.y2;
-    let x3=l2.x1, y3=l2.y1, x4=l2.x2, y4=l2.y2;
-    let denom = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4);
-    if (denom===0) return null;
-    let px = ((x1*y2 - y1*x2)*(x3-x4) - (x1-x2)*(x3*y4 - y3*x4))/denom;
-    let py = ((x1*y2 - y1*x2)*(y3-y4) - (y1-y2)*(x3*y4 - y3*x4))/denom;
-    if (px < Math.min(x1,x2)-0.1 || px > Math.max(x1,x2)+0.1) return null;
-    if (px < Math.min(x3,x4)-0.1 || px > Math.max(x3,x4)+0.1) return null;
-    if (py < Math.min(y1,y2)-0.1 || py > Math.max(y1,y2)+0.1) return null;
-    if (py < Math.min(y3,y4)-0.1 || py > Math.max(y3,y4)+0.1) return null;
-    return {x:px, y:py};
+let x1=l1.x1, y1=l1.y1, x2=l1.x2, y2=l1.y2;
+let x3=l2.x1, y3=l2.y1, x4=l2.x2, y4=l2.y2;
+let denom=(x1-x2)*(y3-y4)-(y1-y2)*(x3-x4);
+if(denom===0) return null;
+let px=((x1*y2 - y1*x2)*(x3-x4) - (x1-x2)*(x3*y4 - y3*x4))/denom;
+let py=((x1*y2 - y1*x2)*(y3-y4) - (y1-y2)*(x3*y4 - y3*x4))/denom;
+if(px<Math.min(x1,x2)-0.1||px>Math.max(x1,x2)+0.1) return null;
+if(px<Math.min(x3,x4)-0.1||px>Math.max(x3,x4)+0.1) return null;
+if(py<Math.min(y1,y2)-0.1||py>Math.max(y1,y2)+0.1) return null;
+if(py<Math.min(y3,y4)-0.1||py>Math.max(y3,y4)+0.1) return null;
+return {x:px,y:py};
 }
 
-// ----------------- Other Tools -----------------
 function startAreaCalc(){ areaPoints=[]; alert('Click points to define area'); }
 function calcArea(pts){ let sum=0; for(let i=0;i<pts.length;i++){ let j=(i+1)%pts.length; sum+=pts[i].x*pts[j].y-pts[j].x*pts[i].y; } return Math.abs(sum/2); }
 
@@ -179,3 +182,4 @@ function clearCanvas(){ if(confirm('Clear all?')){ canvas.clear(); resize(); } }
 </script>
 </body>
 </html>
+
