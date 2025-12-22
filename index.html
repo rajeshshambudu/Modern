@@ -2,76 +2,95 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Lite-CAD Web (DWG Compatible)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lite-CAD: Google Earth to DWG</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/makerjs@0.18.0/dist/browser.maker.js"></script>
     
     <style>
-        body { margin: 0; background: #1a1a1a; color: #eee; font-family: 'Segoe UI', sans-serif; overflow: hidden; display: flex; }
+        :root { --accent: #0078d4; --bg: #1a1a1a; --panel: #252525; }
+        body { margin: 0; background: var(--bg); color: #eee; font-family: 'Segoe UI', sans-serif; overflow: hidden; display: flex; }
         
-        /* Sidebar & Toolbars */
-        .toolbar { position: absolute; top: 10px; left: 10px; z-index: 10; display: flex; gap: 8px; background: #333; padding: 12px; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); align-items: center; }
-        .properties-panel { width: 240px; background: #252525; border-left: 1px solid #444; padding: 20px; display: none; flex-direction: column; z-index: 20; height: 100vh; position: absolute; right: 0; }
+        /* UI Layout */
+        .sidebar { width: 260px; background: var(--panel); border-right: 1px solid #444; height: 100vh; display: flex; flex-direction: column; padding: 15px; z-index: 20; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
+        .canvas-container { flex-grow: 1; position: relative; }
         
-        /* Canvas Styling */
-        .canvas-container { cursor: crosshair !important; flex-grow: 1; }
+        /* Toolbars */
+        .toolbar-group { margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        .label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block; }
         
-        /* UI Elements */
-        button, select, input { background: #444; color: white; border: 1px solid #555; padding: 6px 12px; cursor: pointer; font-size: 13px; }
-        button:hover { background: #555; }
-        .btn-primary { background: #0078d4; border: none; font-weight: bold; }
-        .label { font-size: 10px; color: #888; margin-bottom: 4px; display: block; text-transform: uppercase; }
-        .input-group { margin-bottom: 15px; }
+        button { background: #444; color: white; border: 1px solid #555; padding: 8px; cursor: pointer; font-size: 12px; border-radius: 4px; margin: 2px; transition: 0.2s; }
+        button:hover { background: #555; border-color: var(--accent); }
+        button.active { background: var(--accent); border-color: #fff; }
+        .btn-primary { background: var(--accent); border: none; font-weight: bold; width: 100%; margin-top: 10px; }
         
-        /* Status Bar */
-        .status-bar { position: absolute; bottom: 0; width: 100%; background: #333; padding: 5px 20px; font-size: 12px; color: #aaa; border-top: 1px solid #444; z-index: 5; }
+        textarea { width: 100%; height: 60px; background: #111; color: #0f0; border: 1px solid #333; font-family: monospace; font-size: 10px; resize: none; margin-bottom: 5px; }
+        
+        .status-bar { position: absolute; bottom: 0; left: 260px; right: 0; background: rgba(30,30,30,0.9); padding: 5px 20px; font-size: 11px; color: #aaa; border-top: 1px solid #444; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
 
-    <div class="toolbar">
-        <select id="layerSelect">
-            <option value="0" data-color="#ffffff">Layer 0 (White)</option>
-            <option value="WALLS" data-color="#00ff00">Walls (Green)</option>
-            <option value="CENTER" data-color="#ff0000">Center (Red)</option>
-            <option value="HIDDEN" data-color="#ffff00">Hidden (Yellow)</option>
-        </select>
-        <button onclick="setMode('line')">Line</button>
-        <button onclick="setMode('rect')">Rect</button>
-        <button class="btn-primary" onclick="exportDXF()">Export DXF/DWG</button>
-        <button onclick="canvas.clear(); drawGrid();" style="color: #ff5f57;">Clear</button>
+    <div class="sidebar">
+        <h2 style="color: var(--accent); margin-top: 0; font-size: 18px;">Lite-CAD GE</h2>
+        
+        <div class="toolbar-group">
+            <span class="label">Project Tools</span>
+            <button onclick="saveProject()">Save</button>
+            <button onclick="loadProject()">Load</button>
+            <button onclick="exportDXF()" class="btn-primary">Export DXF (DWG)</button>
+        </div>
+
+        <div class="toolbar-group">
+            <span class="label">Google Earth Import</span>
+            <button onclick="document.getElementById('mapInput').click()">📷 Import Map Image</button>
+            <input type="file" id="mapInput" style="display:none" onchange="importSatellite(event)">
+            <textarea id="kmlBox" placeholder="Paste KML <coordinates> here..."></textarea>
+            <button onclick="importKML(document.getElementById('kmlBox').value)" style="width:100%">Draw KML Path</button>
+            <button onclick="startCalibration()" style="width:100%; margin-top:5px; color:#ffcc00;">Set Scale (2-Point)</button>
+        </div>
+
+        <div class="toolbar-group">
+            <span class="label">Drafting Tools</span>
+            <button id="btn-line" onclick="setMode('line')">Line</button>
+            <button id="btn-rect" onclick="setMode('rect')">Rect</button>
+            <button id="btn-text" onclick="setMode('text')">Text</button>
+            <button id="btn-area" onclick="startAreaCalc()">Calc Area</button>
+            <button onclick="insertNorthArrow()">🧭 North</button>
+            <button onclick="clearCanvas()" style="color: #ff5f57;">Clear All</button>
+        </div>
+
+        <div class="toolbar-group">
+            <span class="label">Settings</span>
+            <select id="layerSelect" style="width:100%; padding:5px; background:#333; color:white;">
+                <option value="0" data-color="#ffffff">Layer 0 (White)</option>
+                <option value="WALLS" data-color="#00ff00">Walls (Green)</option>
+                <option value="BOUNDS" data-color="#ff0000">Bounds (Red)</option>
+            </select>
+        </div>
     </div>
 
-    <canvas id="c"></canvas>
-
-    <div id="propertiesPanel" class="properties-panel">
-        <h3 style="margin: 0 0 15px 0; font-size: 14px; color: #0078d4;">PROPERTIES</h3>
-        <div class="input-group">
-            <span class="label">Layer</span>
-            <select id="propLayer" style="width: 100%;"></select>
+    <div class="canvas-container">
+        <canvas id="c"></canvas>
+        <div class="status-bar">
+            <div id="coords">X: 0, Y: 0 | Snap: 20px</div>
+            <div id="scale-info">Scale: 1px = 1.0000 units</div>
         </div>
-        <div class="input-group">
-            <span class="label">Coordinates</span>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                <input type="number" id="propX1" step="10"> <input type="number" id="propY1" step="10">
-                <input type="number" id="propX2" step="10"> <input type="number" id="propY2" step="10">
-            </div>
-        </div>
-        <button onclick="deleteObject()" style="background: #a33; border:none; margin-top: auto;">Delete Selected</button>
     </div>
-
-    <div class="status-bar" id="coords">X: 0, Y: 0 | Snap: 20px | Alt+Click to Pan</div>
 
     <script>
         const canvas = new fabric.Canvas('c', { backgroundColor: '#1a1a1a', selection: true });
         let grid = 20;
         let mode = 'line';
         let isDrawing = false;
-        let currentObj;
+        let currentObj, distanceLabel;
+        let realWorldScale = 1; 
+        let calibrationPoints = [];
+        let areaPoints = [];
 
-        // Initialize Canvas Size
+        // INITIALIZATION
         function resize() {
-            canvas.setWidth(window.innerWidth);
+            canvas.setWidth(window.innerWidth - 260);
             canvas.setHeight(window.innerHeight);
             drawGrid();
         }
@@ -84,104 +103,169 @@
                 canvas.add(new fabric.Line([i * grid, 0, i * grid, canvas.height], { stroke: '#2a2a2a', selectable: false, evented: false, isGrid: true }));
                 canvas.add(new fabric.Line([0, i * grid, canvas.width, i * grid], { stroke: '#2a2a2a', selectable: false, evented: false, isGrid: true }));
             }
-            canvas.sendToBack(canvas.getObjects().find(o => o.isGrid));
         }
 
-        function setMode(m) { mode = m; canvas.discardActiveObject().renderAll(); }
+        function setMode(m) { 
+            mode = m; 
+            document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            if(document.getElementById('btn-'+m)) document.getElementById('btn-'+m).classList.add('active');
+        }
 
-        // MOUSE EVENTS: Drawing & Snapping
+        // SNAPPING LOGIC (OSNAP)
+        function getSnapPoint(pointer) {
+            let snapX = Math.round(pointer.x / grid) * grid;
+            let snapY = Math.round(pointer.y / grid) * grid;
+            const threshold = 15;
+
+            canvas.getObjects().forEach(obj => {
+                if (obj.type === 'line' && !obj.isGrid) {
+                    if (Math.hypot(obj.x1 - pointer.x, obj.y1 - pointer.y) < threshold) { snapX = obj.x1; snapY = obj.y1; }
+                    if (Math.hypot(obj.x2 - pointer.x, obj.y2 - pointer.y) < threshold) { snapX = obj.x2; snapY = obj.y2; }
+                }
+            });
+            return { x: snapX, y: snapY };
+        }
+
+        // MOUSE EVENTS
         canvas.on('mouse:down', function(o) {
-            if (o.e.altKey || o.e.button === 1) { this.isDragging = true; return; }
+            if (o.e.altKey) { this.isDragging = true; return; }
+            let pointer = canvas.getPointer(o.e);
+            let snapped = getSnapPoint(pointer);
+
+            if (mode === 'calibrate') {
+                calibrationPoints.push(snapped);
+                if (calibrationPoints.length === 2) {
+                    let pDist = Math.sqrt(Math.pow(calibrationPoints[1].x - calibrationPoints[0].x, 2) + Math.pow(calibrationPoints[1].y - calibrationPoints[0].y, 2));
+                    let rDist = prompt("Enter real distance (meters/feet):", "100");
+                    if (rDist) {
+                        realWorldScale = parseFloat(rDist) / pDist;
+                        document.getElementById('scale-info').innerText = `Scale: 1px = ${realWorldScale.toFixed(4)} units`;
+                    }
+                    calibrationPoints = []; setMode('line');
+                }
+                return;
+            }
+
+            if (mode === 'area') {
+                areaPoints.push(snapped);
+                if (areaPoints.length > 2) drawAreaOverlay();
+                return;
+            }
+
+            if (mode === 'text') {
+                let txt = prompt("Text:", "LABEL");
+                if(txt) canvas.add(new fabric.IText(txt, { left: snapped.x, top: snapped.y, fill: '#fff', fontSize: 16 }));
+                return;
+            }
+
             if (canvas.getActiveObject()) return;
 
             isDrawing = true;
-            let pointer = canvas.getPointer(o.e);
-            let snapX = Math.round(pointer.x / grid) * grid;
-            let snapY = Math.round(pointer.y / grid) * grid;
-
-            const layerEl = document.getElementById('layerSelect');
-            const layerColor = layerEl.options[layerEl.selectedIndex].getAttribute('data-color');
+            const layerColor = document.getElementById('layerSelect').selectedOptions[0].getAttribute('data-color');
 
             if (mode === 'line') {
-                currentObj = new fabric.Line([snapX, snapY, snapX, snapY], { stroke: layerColor, strokeWidth: 2, selectable: true });
-                currentObj.layer = layerEl.value;
+                currentObj = new fabric.Line([snapped.x, snapped.y, snapped.x, snapped.y], { stroke: layerColor, strokeWidth: 2, selectable: true });
+                currentObj.layer = document.getElementById('layerSelect').value;
+                canvas.add(currentObj);
             }
-            canvas.add(currentObj);
         });
 
         canvas.on('mouse:move', function(o) {
             let pointer = canvas.getPointer(o.e);
-            let snapX = Math.round(pointer.x / grid) * grid;
-            let snapY = Math.round(pointer.y / grid) * grid;
-            document.getElementById('coords').innerText = `X: ${snapX}, Y: ${Math.round(canvas.height - snapY)} | Snap: 20px | Alt+Click to Pan`;
+            let snapped = getSnapPoint(pointer);
+            let snapX = snapped.x; let snapY = snapped.y;
 
-            if (this.isDragging) {
-                let vpt = this.viewportTransform;
-                vpt[4] += o.e.movementX;
-                vpt[5] += o.e.movementY;
-                this.requestRenderAll();
-                return;
+            if (o.e.shiftKey && isDrawing) {
+                if (Math.abs(snapX - currentObj.x1) > Math.abs(snapY - currentObj.y1)) snapY = currentObj.y1;
+                else snapX = currentObj.x1;
             }
 
+            document.getElementById('coords').innerText = `X: ${(snapX * realWorldScale).toFixed(1)}, Y: ${(Math.abs(canvas.height - snapY) * realWorldScale).toFixed(1)}`;
+
             if (!isDrawing) return;
+
             currentObj.set({ x2: snapX, y2: snapY });
+            
+            // Distance Ruler
+            let d = (Math.sqrt(Math.pow(snapX - currentObj.x1, 2) + Math.pow(snapY - currentObj.y1, 2)) * realWorldScale).toFixed(2);
+            if (!distanceLabel) {
+                distanceLabel = new fabric.Text("", { fontSize: 12, fill: '#0078d4', backgroundColor: '#000' });
+                canvas.add(distanceLabel);
+            }
+            distanceLabel.set({ text: d, left: snapX + 10, top: snapY - 10 });
             canvas.renderAll();
         });
 
-        canvas.on('mouse:up', () => { isDrawing = false; this.isDragging = false; });
-
-        // ZOOM
-        canvas.on('mouse:wheel', function(opt) {
-            let delta = opt.e.deltaY;
-            let zoom = canvas.getZoom() * (0.999 ** delta);
-            canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
-            opt.e.preventDefault();
+        canvas.on('mouse:up', () => { 
+            isDrawing = false; 
+            if(distanceLabel) { canvas.remove(distanceLabel); distanceLabel = null; }
         });
 
-        // PROPERTIES LOGIC
-        canvas.on('selection:created', (e) => updatePanel(e.selected[0]));
-        canvas.on('selection:updated', (e) => updatePanel(e.selected[0]));
-        canvas.on('selection:cleared', () => document.getElementById('propertiesPanel').style.display = 'none');
+        // KML PARSER
+        function importKML(text) {
+            const parser = new DOMParser();
+            const xml = parser.parseFromString(text, "text/xml");
+            const coordsNodes = xml.getElementsByTagName("coordinates");
+            const scaleKML = 100000; 
 
-        function updatePanel(obj) {
-            const panel = document.getElementById('propertiesPanel');
-            panel.style.display = 'flex';
-            document.getElementById('propX1').value = obj.x1;
-            document.getElementById('propY1').value = obj.y1;
-            document.getElementById('propX2').value = obj.x2;
-            document.getElementById('propY2').value = obj.y2;
-            
-            const pLayer = document.getElementById('propLayer');
-            pLayer.innerHTML = document.getElementById('layerSelect').innerHTML;
-            pLayer.value = obj.layer || "0";
-            
-            pLayer.onchange = (e) => {
-                obj.layer = e.target.value;
-                obj.set({ stroke: e.target.options[e.target.selectedIndex].getAttribute('data-color') });
-                canvas.renderAll();
-            };
+            for (let node of coordsNodes) {
+                let pairs = node.textContent.trim().split(/\s+/);
+                let pts = pairs.map(p => { let a = p.split(',').map(Number); return {x: a[0], y: a[1]}; });
+                let ox = pts[0].x, oy = pts[0].y;
+
+                for (let i = 0; i < pts.length - 1; i++) {
+                    canvas.add(new fabric.Line([
+                        (pts[i].x - ox) * scaleKML + 300, -(pts[i].y - oy) * scaleKML + 300,
+                        (pts[i+1].x - ox) * scaleKML + 300, -(pts[i+1].y - oy) * scaleKML + 300
+                    ], { stroke: '#00ff00', strokeWidth: 2 }));
+                }
+            }
+            canvas.renderAll();
         }
 
-        function deleteObject() { canvas.remove(canvas.getActiveObject()); }
+        // BLOCKS
+        function insertNorthArrow() {
+            const group = new fabric.Group([
+                new fabric.Line([0, 0, 0, -50], { stroke: '#fff', strokeWidth: 2 }),
+                new fabric.Triangle({ width: 15, height: 15, fill: '#fff', left: -7.5, top: -65 }),
+                new fabric.Text('N', { fontSize: 14, fill: '#fff', top: -85, left: -5 })
+            ], { left: 100, top: 100 });
+            canvas.add(group);
+        }
 
-        // EXPORT TO DXF
+        function importSatellite(e) {
+            const reader = new FileReader();
+            reader.onload = (f) => {
+                fabric.Image.fromURL(f.target.result, (img) => {
+                    img.set({ opacity: 0.5, selectable: true, isBackground: true });
+                    img.scaleToWidth(800);
+                    canvas.add(img);
+                    canvas.sendToBack(img);
+                });
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+
         function exportDXF() {
-            const makerjs = window.require('makerjs');
             const model = { paths: {} };
             canvas.getObjects().forEach((obj, i) => {
                 if (obj.type === 'line' && !obj.isGrid) {
-                    const line = new makerjs.paths.Line([obj.x1, -obj.y1], [obj.x2, -obj.y2]);
-                    line.layer = obj.layer || "0";
-                    model.paths['L' + i] = line;
+                    model.paths['L'+i] = new makerjs.paths.Line(
+                        [obj.x1 * realWorldScale, -obj.y1 * realWorldScale], 
+                        [obj.x2 * realWorldScale, -obj.y2 * realWorldScale]
+                    );
                 }
             });
             const dxf = makerjs.exporter.toDXF(model);
-            const blob = new Blob([dxf], {type: 'application/dxf'});
             const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'web_cad_drawing.dxf';
+            link.href = URL.createObjectURL(new Blob([dxf], {type: 'application/dxf'}));
+            link.download = 'site_plan.dxf';
             link.click();
         }
+
+        function saveProject() { localStorage.setItem('liteCad', JSON.stringify(canvas.toJSON())); alert("Saved!"); }
+        function loadProject() { canvas.loadFromJSON(localStorage.getItem('liteCad'), () => { canvas.renderAll(); drawGrid(); }); }
+        function clearCanvas() { if(confirm("Clear?")) { canvas.clear(); drawGrid(); } }
     </script>
 </body>
 </html>
