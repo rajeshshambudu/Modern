@@ -1,93 +1,96 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Structural Engineering Design & Analysis</title>
+    <title>CivicDesign | Structural Analysis Suite</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
     <header>
-        <h1>Structural Engineering Design & Analysis</h1>
+        <h1>CivicDesign Suite</h1>
+        <p>IS 456:2000 Standard Calculations</p>
         <nav>
             <ul>
-                <li><a href="#beam-design">Beam Design</a></li>
-                <li><a href="#column-design">Column Design</a></li>
-                <li><a href="#slab-design">Slab Design</a></li>
-                <li><a href="#foundation-design">Foundation Design</a></li>
+                <li><a href="#beam-design">Beam</a></li>
+                <li><a href="#column-design">Column</a></li>
+                <li><a href="#slab-design">Slab</a></li>
+                <li><a href="#foundation-design">Foundation</a></li>
             </ul>
         </nav>
     </header>
 
     <main>
-        <!-- Beam Design Form -->
+        <section id="viz-container" class="full-width">
+            <h2>3D Structural Preview</h2>
+            <div id="canvas-container"></div>
+            <p class="hint">Preview updates automatically when you calculate.</p>
+        </section>
+
         <section id="beam-design">
             <h2>Beam Design</h2>
             <form id="beamForm">
-                <label>Span Length (L) [m]: <input type="number" id="beamSpan" required></label><br>
-                <label>Width (b) [mm]: <input type="number" id="beamWidth" required></label><br>
-                <label>Depth (d) [mm]: <input type="number" id="beamDepth" required></label><br>
-                <label>Concrete Grade (MPa): <input type="text" id="concreteGrade" required></label><br>
-                <label>Steel Grade (MPa): <input type="text" id="steelGrade" required></label><br>
-                <label>Number of Main Bars: <input type="number" id="mainBars" required></label><br>
-                <label>Bar Size [mm]: <input type="number" id="barSize" required></label><br>
-                <label>Number of Stirrups: <input type="number" id="stirrups" required></label><br>
-                <button type="button" onclick="calculateBeam()">Calculate Beam Design</button>
+                <label>Span (L) [m]</label> <input type="number" id="beamSpan" value="5">
+                <label>Width (b) [mm]</label> <input type="number" id="beamWidth" value="230">
+                <label>Depth (d) [mm]</label> <input type="number" id="beamDepth" value="450">
+                <label>Concrete Grade</label>
+                <select id="concreteGrade">
+                    <option value="20">M20</option>
+                    <option value="25">M25</option>
+                    <option value="30">M30</option>
+                </select>
+                <label>Steel Grade</label>
+                <select id="steelGrade">
+                    <option value="415">Fe 415</option>
+                    <option value="500">Fe 500</option>
+                </select>
+                <label>Main Bars (Nos)</label> <input type="number" id="mainBars" value="3">
+                <label>Bar Size [mm]</label> <input type="number" id="barSize" value="16">
+                <button type="button" class="btn-calc" onclick="calculateBeam()">Calculate Beam</button>
             </form>
-            <p id="beamOutput"></p>
+            <div id="beamOutput" class="output-box"></div>
         </section>
 
-        <!-- Column Design Form -->
         <section id="column-design">
             <h2>Column Design</h2>
             <form id="columnForm">
-                <label>Column Width (b) [mm]: <input type="number" id="colWidth" required></label><br>
-                <label>Column Depth (d) [mm]: <input type="number" id="colDepth" required></label><br>
-                <label>Column Height (h) [m]: <input type="number" id="colHeight" required></label><br>
-                <label>Concrete Grade (MPa): <input type="text" id="colConcreteGrade" required></label><br>
-                <label>Steel Grade (MPa): <input type="text" id="colSteelGrade" required></label><br>
-                <label>Number of Bars: <input type="number" id="colBars" required></label><br>
-                <label>Bar Size [mm]: <input type="number" id="colBarSize" required></label><br>
-                <button type="button" onclick="calculateColumn()">Calculate Column Design</button>
+                <label>Width (b) [mm]</label> <input type="number" id="colWidth" value="300">
+                <label>Depth (D) [mm]</label> <input type="number" id="colDepth" value="300">
+                <label>Height (h) [m]</label> <input type="number" id="colHeight" value="3">
+                <label>No. of Bars</label> <input type="number" id="colBars" value="4">
+                <label>Bar Dia [mm]</label> <input type="number" id="colBarSize" value="20">
+                <button type="button" class="btn-calc" onclick="calculateColumn()">Calculate Column</button>
             </form>
-            <p id="columnOutput"></p>
+            <div id="columnOutput" class="output-box"></div>
         </section>
 
-        <!-- Slab Design Form -->
-        <section id="slab-design">
-            <h2>Slab Design</h2>
-            <form id="slabForm">
-                <label>Length of Slab (L) [m]: <input type="number" id="slabLength" required></label><br>
-                <label>Width of Slab (b) [m]: <input type="number" id="slabWidth" required></label><br>
-                <label>Thickness of Slab (h) [mm]: <input type="number" id="slabThickness" required></label><br>
-                <label>Concrete Grade (MPa): <input type="text" id="slabConcreteGrade" required></label><br>
-                <label>Steel Grade (MPa): <input type="text" id="slabSteelGrade" required></label><br>
-                <label>Number of Main Bars: <input type="number" id="slabMainBars" required></label><br>
-                <label>Bar Size [mm]: <input type="number" id="slabBarSize" required></label><br>
-                <button type="button" onclick="calculateSlab()">Calculate Slab Design</button>
-            </form>
-            <p id="slabOutput"></p>
-        </section>
-
-        <!-- Foundation Design Form -->
         <section id="foundation-design">
             <h2>Foundation Design</h2>
             <form id="foundationForm">
-                <label>Foundation Width (b) [m]: <input type="number" id="foundationWidth" required></label><br>
-                <label>Foundation Length (L) [m]: <input type="number" id="foundationLength" required></label><br>
-                <label>Foundation Depth (d) [m]: <input type="number" id="foundationDepth" required></label><br>
-                <label>Soil Bearing Capacity (q) [kN/m²]: <input type="number" id="soilBearingCapacity" required></label><br>
-                <label>Column Load (P) [kN]: <input type="number" id="columnLoad" required></label><br>
-                <button type="button" onclick="calculateFoundation()">Calculate Foundation Design</button>
+                <label>Soil Type</label>
+                <select id="soilType" onchange="updateSBC()">
+                    <option value="150">Medium Clay (150 kN/m²)</option>
+                    <option value="250">Dense Sand (250 kN/m²)</option>
+                    <option value="500">Hard Rock (500 kN/m²)</option>
+                </select>
+                <label>SBC [kN/m²]</label> <input type="number" id="soilBearingCapacity" value="150">
+                <label>Column Load [kN]</label> <input type="number" id="columnLoad" value="1000">
+                <label>Footing Width [m]</label> <input type="number" id="foundationWidth" value="2">
+                <label>Footing Length [m]</label> <input type="number" id="foundationLength" value="2">
+                <button type="button" class="btn-calc" onclick="calculateFoundation()">Calculate Footing</button>
             </form>
-            <p id="foundationOutput"></p>
+            <div id="foundationOutput" class="output-box"></div>
         </section>
     </main>
 
+    <div class="action-bar">
+        <button onclick="downloadReport()" class="btn-download">📥 Download Report</button>
+        <button onclick="clearAllFields()" class="btn-reset">🔄 Reset All</button>
+    </div>
+
     <footer>
-        <p>&copy; 2025 Structural Engineering Project | Indian Standard Codes</p>
+        <p>&copy; 2025 Structural Engineering Project | Engineering Tool</p>
     </footer>
 
     <script src="script.js"></script>
